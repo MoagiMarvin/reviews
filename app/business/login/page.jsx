@@ -1,9 +1,8 @@
 'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 
 export default function LoginPage() {
-  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [form, setForm] = useState({
@@ -20,21 +19,18 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
 
-    const res = await fetch('/api/business/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form)
+    const { error } = await supabase.auth.signInWithPassword({
+      email: form.email,
+      password: form.password
     })
 
-    const data = await res.json()
-
-    if (data.error) {
-      setError(data.error)
+    if (error) {
+      setError(error.message)
       setLoading(false)
       return
     }
 
-    router.push('/business/dashboard')
+    window.location.href = '/business/dashboard'
   }
 
   return (
