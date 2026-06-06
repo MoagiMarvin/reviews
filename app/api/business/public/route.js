@@ -14,7 +14,7 @@ export async function GET(req) {
 
         const { data, error } = await supabaseAdmin
             .from('businesses')
-            .select('id, name, slug, google_review_link')
+            .select('id, name, slug, google_review_link,rating_categories')
             .eq('slug', slug)
             .single()
 
@@ -34,3 +34,6 @@ export async function GET(req) {
         )
     }
 }
+
+
+

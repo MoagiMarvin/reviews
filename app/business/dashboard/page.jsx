@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Sidebar from '@/components/business/Sidebar'
 
 export default function DashboardPage() {
     const router = useRouter()
@@ -8,18 +9,20 @@ export default function DashboardPage() {
     const [requests, setRequests] = useState([])
     const [reviews, setReviews] = useState([])
     const [loading, setLoading] = useState(true)
-    const [sending, setSending] = useState(false)
-    const [success, setSuccess] = useState(false)
-    const [error, setError] = useState('')
-    const [form, setForm] = useState({ customerNumber: '', customerName: '' })
 
     useEffect(() => { loadDashboard() }, [])
 
     async function loadDashboard() {
         try {
-            // Get business info
-            const bizRes = await fetch('/api/business/me')
+            const [bizRes, reqRes, revRes] = await Promise.all([
+                fetch('/api/business/me'),
+                fetch('/api/requests'),
+                fetch('/api/reviews')
+            ])
+
             const bizData = await bizRes.json()
+            const reqData = await reqRes.json()
+            const revData = await revRes.json()
 
             if (!bizData.business) {
                 router.push('/business/login')
@@ -27,15 +30,7 @@ export default function DashboardPage() {
             }
 
             setBusiness(bizData.business)
-
-            // Get requests
-            const reqRes = await fetch('/api/requests')
-            const reqData = await reqRes.json()
             if (reqData.requests) setRequests(reqData.requests)
-
-            // Get reviews
-            const revRes = await fetch('/api/reviews')
-            const revData = await revRes.json()
             if (revData.reviews) setReviews(revData.reviews)
 
         } catch (err) {
@@ -45,54 +40,23 @@ export default function DashboardPage() {
         }
     }
 
-    async function handleSend(e) {
-        e.preventDefault()
-        setSending(true)
-        setError('')
-        setSuccess(false)
-
-        const res = await fetch('/api/requests', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(form)
-        })
-
-        const data = await res.json()
-
-        if (data.error) {
-            setError(data.error)
-            setSending(false)
-            return
-        }
-
-        setSuccess(true)
-        setForm({ customerNumber: '', customerName: '' })
-        setSending(false)
-
-        // Refresh requests
-        const reqRes = await fetch('/api/requests')
-        const reqData = await reqRes.json()
-        if (reqData.requests) setRequests(reqData.requests)
-
-        setTimeout(() => setSuccess(false), 4000)
-    }
-
-    async function handleLogout() {
-        await fetch('/api/business/logout', { method: 'POST' })
-        router.push('/business/login')
-    }
-
-    if (loading) {
-        return (
-            <div style={centerStyle}>
-                <p style={{ color: '#888' }}>Loading...</p>
-            </div>
-        )
-    }
+    if (loading) return (
+        <div style={centerStyle}>
+            <p style={{ color: '#888' }}>Loading...</p>
+        </div>
+    )
 
     const avgRating = reviews.length
         ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
         : null
+
+    const responseRate = requests.length
+        ? Math.round((reviews.length / requests.length) * 100)
+        : 0
+
+    const pending = requests.filter(r => r.status === 'pending').length
+    const sent = requests.filter(r => r.status === 'sent').length
+    const reviewed = requests.filter(r => r.status === 'reviewed').length
 
     const statusColors = {
         pending: '#f59e0b',
@@ -100,152 +64,84 @@ export default function DashboardPage() {
         reviewed: '#10b981'
     }
 
+    const positiveReviews = reviews.filter(r => r.rating >= 4).length
+    const negativeReviews = reviews.filter(r => r.rating < 4).length
+
     return (
-        <div style={{ minHeight: '100vh', background: '#fafafa' }}>
+        <div style={layoutStyle}>
+            <Sidebar business={business} />
+            <div style={mainStyle}>
+                <div style={pageStyle}>
 
-            {/* Header */}
-            <div style={headerStyle}>
-                <div>
-                    <div style={{ fontWeight: '600', fontSize: '1rem' }}>
-                        {business?.name}
-                    </div>
-                    <div style={{ fontSize: '0.75rem', color: '#888', marginTop: '2px' }}>
-                        /feedback/{business?.slug}
-                    </div>
-                </div>
-                <button onClick={handleLogout} style={logoutStyle}>
-                    Log out
-                </button>
-            </div>
+                    <h1 style={pageTitleStyle}>Overview</h1>
+                    <p style={pageSubStyle}>
+                        Welcome back — here is how things are looking
+                    </p>
 
-            <div style={pageStyle}>
-
-                {/* Stats */}
-                <div style={statsStyle}>
-                    <div style={statStyle}>
-                        <div style={statLabelStyle}>Requests sent</div>
-                        <div style={statValStyle}>{requests.length}</div>
-                    </div>
-                    <div style={statStyle}>
-                        <div style={statLabelStyle}>Reviews received</div>
-                        <div style={{ ...statValStyle, color: '#10b981' }}>
-                            {reviews.length}
-                        </div>
-                    </div>
-                    <div style={statStyle}>
-                        <div style={statLabelStyle}>Average rating</div>
-                        <div style={{ ...statValStyle, color: '#f59e0b' }}>
-                            {avgRating ? `${avgRating} ★` : '—'}
-                        </div>
-                    </div>
-                    <div style={statStyle}>
-                        <div style={statLabelStyle}>Response rate</div>
-                        <div style={statValStyle}>
-                            {requests.length
-                                ? `${Math.round((reviews.length / requests.length) * 100)}%`
-                                : '0%'}
-                        </div>
-                    </div>
-                </div>
-
-                <div style={gridStyle}>
-
-                    {/* Send form */}
-                    <div style={cardStyle}>
-                        <h2 style={cardTitleStyle}>Send feedback request</h2>
-                        <p style={{ fontSize: '0.8rem', color: '#888', marginBottom: '1.25rem' }}>
-                            Customer gets WhatsApp in 1 hour
-                        </p>
-
-                        {error && <div style={errorStyle}>{error}</div>}
-                        {success && (
-                            <div style={successStyle}>
-                                Queued — WhatsApp sends in 1 hour ✓
+                    {/* Stats */}
+                    <div style={statsGridStyle}>
+                        <div style={statCardStyle}>
+                            <div style={statLabelStyle}>Total requests</div>
+                            <div style={statValStyle}>{requests.length}</div>
+                            <div style={statSubStyle}>
+                                {pending} pending · {sent} sent · {reviewed} reviewed
                             </div>
-                        )}
-
-                        <form onSubmit={handleSend}>
-                            <div style={{ marginBottom: '0.875rem' }}>
-                                <label style={labelStyle}>WhatsApp number</label>
-                                <input
-                                    type="tel"
-                                    placeholder="082 000 0000"
-                                    value={form.customerNumber}
-                                    onChange={(e) => setForm({ ...form, customerNumber: e.target.value })}
-                                    required
-                                    style={inputStyle}
-                                />
+                        </div>
+                        <div style={statCardStyle}>
+                            <div style={statLabelStyle}>Reviews received</div>
+                            <div style={{ ...statValStyle, color: '#16a34a' }}>
+                                {reviews.length}
                             </div>
-                            <div style={{ marginBottom: '1rem' }}>
-                                <label style={labelStyle}>Customer name (optional)</label>
-                                <input
-                                    type="text"
-                                    placeholder="e.g. Sipho"
-                                    value={form.customerName}
-                                    onChange={(e) => setForm({ ...form, customerName: e.target.value })}
-                                    style={inputStyle}
-                                />
+                            <div style={statSubStyle}>
+                                {positiveReviews} positive · {negativeReviews} negative
                             </div>
-                            <button type="submit" disabled={sending} style={btnStyle}>
-                                {sending ? 'Sending...' : 'Send request'}
-                            </button>
-                        </form>
-
-                        <div style={linkBoxStyle}>
-                            <p style={{ fontSize: '0.75rem', color: '#888', marginBottom: '0.3rem' }}>
-                                Your feedback link
-                            </p>
-                            <p style={{ fontSize: '0.85rem', fontWeight: '500', color: '#111' }}>
-                                {process.env.NEXT_PUBLIC_APP_URL}/feedback/{business?.slug}
-                            </p>
+                        </div>
+                        <div style={statCardStyle}>
+                            <div style={statLabelStyle}>Average rating</div>
+                            <div style={{ ...statValStyle, color: '#f59e0b' }}>
+                                {avgRating ? `${avgRating} ★` : '—'}
+                            </div>
+                            <div style={statSubStyle}>
+                                out of 5.0
+                            </div>
+                        </div>
+                        <div style={statCardStyle}>
+                            <div style={statLabelStyle}>Response rate</div>
+                            <div style={statValStyle}>{responseRate}%</div>
+                            <div style={statSubStyle}>
+                                of requests reviewed
+                            </div>
                         </div>
                     </div>
 
-                    {/* Right side */}
-                    <div>
-
-                        {/* Recent requests */}
-                        <div style={{ ...cardStyle, marginBottom: '1rem' }}>
-                            <h2 style={cardTitleStyle}>Recent requests</h2>
-                            {requests.length === 0 ? (
-                                <p style={emptyStyle}>No requests yet</p>
-                            ) : (
-                                requests.slice(0, 6).map((r) => (
-                                    <div key={r.id} style={rowStyle}>
-                                        <div>
-                                            <div style={{ fontSize: '0.875rem', fontWeight: '500' }}>
-                                                {r.customer_name || r.customer_number}
-                                            </div>
-                                            <div style={{ fontSize: '0.75rem', color: '#aaa' }}>
-                                                {new Date(r.created_at).toLocaleDateString('en-ZA')}
-                                            </div>
-                                        </div>
-                                        <span style={{
-                                            fontSize: '0.75rem',
-                                            fontWeight: '600',
-                                            color: statusColors[r.status]
-                                        }}>
-                                            {r.status}
-                                        </span>
-                                    </div>
-                                ))
-                            )}
-                        </div>
+                    <div style={gridStyle}>
 
                         {/* Recent reviews */}
                         <div style={cardStyle}>
-                            <h2 style={cardTitleStyle}>Recent reviews</h2>
+                            <div style={cardHeaderStyle}>
+                                <h2 style={cardTitleStyle}>Recent reviews</h2>
+                                <a href="/business/reviews" style={viewAllStyle}>
+                                    View all →
+                                </a>
+                            </div>
+
                             {reviews.length === 0 ? (
-                                <p style={emptyStyle}>No reviews yet</p>
+                                <div style={emptyStyle}>
+                                    <p style={{ marginBottom: '0.5rem' }}>No reviews yet</p>
+                                    <a href="/business/send" style={linkStyle}>
+                                        Send your first request →
+                                    </a>
+                                </div>
                             ) : (
-                                reviews.slice(0, 5).map((r) => (
+                                reviews.slice(0, 5).map(r => (
                                     <div key={r.id} style={reviewRowStyle}>
                                         <div style={{
                                             display: 'flex',
                                             justifyContent: 'space-between',
+                                            alignItems: 'center',
                                             marginBottom: '4px'
                                         }}>
-                                            <span style={{ fontSize: '0.875rem', fontWeight: '500' }}>
+                                            <span style={{ fontSize: '0.875rem', fontWeight: '500', color: '#111' }}>
                                                 {r.customer_name || 'Anonymous'}
                                             </span>
                                             <span style={{ color: '#f59e0b', fontSize: '0.85rem' }}>
@@ -253,16 +149,21 @@ export default function DashboardPage() {
                                             </span>
                                         </div>
                                         {r.feedback && (
-                                            <p style={{ fontSize: '0.8rem', color: '#666', lineHeight: '1.5' }}>
+                                            <p style={{
+                                                fontSize: '0.8rem',
+                                                color: '#666',
+                                                lineHeight: '1.5',
+                                                marginBottom: '4px'
+                                            }}>
                                                 {r.feedback}
                                             </p>
                                         )}
                                         {!r.feedback && r.is_public && (
-                                            <p style={{ fontSize: '0.75rem', color: '#10b981' }}>
+                                            <p style={{ fontSize: '0.75rem', color: '#16a34a' }}>
                                                 Sent to Google ✓
                                             </p>
                                         )}
-                                        <p style={{ fontSize: '0.7rem', color: '#bbb', marginTop: '4px' }}>
+                                        <p style={{ fontSize: '0.7rem', color: '#bbb' }}>
                                             {new Date(r.created_at).toLocaleDateString('en-ZA')}
                                         </p>
                                     </div>
@@ -270,6 +171,75 @@ export default function DashboardPage() {
                             )}
                         </div>
 
+                        {/* Right column */}
+                        <div>
+
+                            {/* Recent requests */}
+                            <div style={{ ...cardStyle, marginBottom: '1rem' }}>
+                                <div style={cardHeaderStyle}>
+                                    <h2 style={cardTitleStyle}>Recent requests</h2>
+                                    <a href="/business/send" style={viewAllStyle}>
+                                        Send new →
+                                    </a>
+                                </div>
+
+                                {requests.length === 0 ? (
+                                    <p style={{ fontSize: '0.85rem', color: '#aaa' }}>
+                                        No requests yet
+                                    </p>
+                                ) : (
+                                    requests.slice(0, 6).map(r => (
+                                        <div key={r.id} style={rowStyle}>
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ fontSize: '0.875rem', fontWeight: '500', color: '#111' }}>
+                                                    {r.customer_name || r.customer_number}
+                                                </div>
+                                                <div style={{ fontSize: '0.7rem', color: '#aaa', marginTop: '2px' }}>
+                                                    {new Date(r.created_at).toLocaleDateString('en-ZA')}
+                                                </div>
+                                            </div>
+                                            <span style={{
+                                                fontSize: '0.75rem',
+                                                fontWeight: '600',
+                                                color: statusColors[r.status],
+                                                textTransform: 'capitalize'
+                                            }}>
+                                                {r.status}
+                                            </span>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+
+                            {/* Quick actions */}
+                            <div style={cardStyle}>
+                                <h2 style={cardTitleStyle}>Quick actions</h2>
+                                <a href="/business/send" style={actionBtnStyle}>
+                                    Send feedback request
+                                </a>
+                                <a href="/business/reviews" style={actionBtnStyle}>
+                                    View all reviews
+                                </a>
+                                <a href="/business/settings" style={actionBtnStyle}>
+                                    Update settings
+                                </a>
+                                <div style={{
+                                    marginTop: '1rem',
+                                    padding: '0.875rem',
+                                    background: '#f9fafb',
+                                    borderRadius: '8px',
+                                    border: '1px solid #e5e5e5'
+                                }}>
+                                    <p style={{ fontSize: '0.75rem', color: '#888', marginBottom: '0.3rem' }}>
+                                        Your feedback link
+                                    </p>
+                                    <p style={{ fontSize: '0.8rem', fontWeight: '500', color: '#111' }}>
+                                        repuvault.co.za/feedback/{business?.slug}
+                                    </p>
+                                </div>
+                            </div>
+
+                        </div>
                     </div>
                 </div>
             </div>
@@ -284,42 +254,45 @@ const centerStyle = {
     justifyContent: 'center'
 }
 
-const headerStyle = {
-    background: '#fff',
-    borderBottom: '1px solid #e5e5e5',
-    padding: '1rem 1.5rem',
+const layoutStyle = {
     display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    position: 'sticky',
-    top: 0,
-    zIndex: 10
+    minHeight: '100vh',
+    background: '#fafafa'
 }
 
-const logoutStyle = {
-    background: 'transparent',
-    border: '1px solid #e5e5e5',
-    borderRadius: '8px',
-    padding: '0.4rem 0.875rem',
-    fontSize: '0.8rem',
-    cursor: 'pointer',
-    color: '#666'
+const mainStyle = {
+    marginLeft: '220px',
+    flex: 1,
+    overflow: 'auto'
 }
 
 const pageStyle = {
     maxWidth: '900px',
     margin: '0 auto',
-    padding: '1.5rem 1rem'
+    padding: '2rem 1.5rem'
 }
 
-const statsStyle = {
+const pageTitleStyle = {
+    fontSize: '1.4rem',
+    fontWeight: '600',
+    color: '#111',
+    marginBottom: '0.25rem'
+}
+
+const pageSubStyle = {
+    color: '#888',
+    fontSize: '0.875rem',
+    marginBottom: '1.5rem'
+}
+
+const statsGridStyle = {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
     gap: '0.75rem',
     marginBottom: '1.5rem'
 }
 
-const statStyle = {
+const statCardStyle = {
     background: '#fff',
     border: '1px solid #e5e5e5',
     borderRadius: '12px',
@@ -335,7 +308,13 @@ const statLabelStyle = {
 const statValStyle = {
     fontSize: '1.8rem',
     fontWeight: '600',
-    color: '#111'
+    color: '#111',
+    marginBottom: '0.25rem'
+}
+
+const statSubStyle = {
+    fontSize: '0.7rem',
+    color: '#aaa'
 }
 
 const gridStyle = {
@@ -352,76 +331,23 @@ const cardStyle = {
     padding: '1.25rem'
 }
 
-const cardTitleStyle = {
-    fontSize: '0.95rem',
-    fontWeight: '600',
-    marginBottom: '0.25rem',
-    color: '#111'
-}
-
-const labelStyle = {
-    fontSize: '0.8rem',
-    color: '#555',
-    display: 'block',
-    marginBottom: '0.4rem',
-    fontWeight: '500'
-}
-
-const inputStyle = {
-    width: '100%',
-    padding: '0.75rem 1rem',
-    borderRadius: '8px',
-    border: '1px solid #e5e5e5',
-    fontSize: '0.9rem',
-    outline: 'none',
-    boxSizing: 'border-box',
-    fontFamily: 'inherit'
-}
-
-const btnStyle = {
-    width: '100%',
-    padding: '0.875rem',
-    borderRadius: '8px',
-    background: '#111',
-    color: '#fff',
-    fontSize: '0.9rem',
-    fontWeight: '600',
-    border: 'none',
-    cursor: 'pointer'
-}
-
-const linkBoxStyle = {
-    marginTop: '1.25rem',
-    padding: '0.875rem',
-    background: '#f9fafb',
-    borderRadius: '8px',
-    border: '1px solid #e5e5e5'
-}
-
-const errorStyle = {
-    background: '#fee2e2',
-    color: '#dc2626',
-    padding: '0.75rem',
-    borderRadius: '8px',
-    marginBottom: '1rem',
-    fontSize: '0.875rem'
-}
-
-const successStyle = {
-    background: '#f0fdf4',
-    color: '#16a34a',
-    padding: '0.75rem',
-    borderRadius: '8px',
-    marginBottom: '1rem',
-    fontSize: '0.875rem'
-}
-
-const rowStyle = {
+const cardHeaderStyle = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '0.625rem 0',
-    borderBottom: '1px solid #f3f4f6'
+    marginBottom: '1rem'
+}
+
+const cardTitleStyle = {
+    fontSize: '0.95rem',
+    fontWeight: '600',
+    color: '#111'
+}
+
+const viewAllStyle = {
+    fontSize: '0.8rem',
+    color: '#888',
+    textDecoration: 'none'
 }
 
 const reviewRowStyle = {
@@ -429,8 +355,34 @@ const reviewRowStyle = {
     borderBottom: '1px solid #f3f4f6'
 }
 
+const rowStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    padding: '0.625rem 0',
+    borderBottom: '1px solid #f3f4f6'
+}
+
 const emptyStyle = {
     fontSize: '0.85rem',
     color: '#aaa',
     padding: '0.5rem 0'
+}
+
+const linkStyle = {
+    color: '#16a34a',
+    fontSize: '0.85rem',
+    textDecoration: 'none'
+}
+
+const actionBtnStyle = {
+    display: 'block',
+    padding: '0.625rem 0.875rem',
+    borderRadius: '8px',
+    background: '#f9fafb',
+    border: '1px solid #e5e5e5',
+    color: '#111',
+    fontSize: '0.875rem',
+    textDecoration: 'none',
+    marginBottom: '0.5rem',
+    textAlign: 'center'
 }

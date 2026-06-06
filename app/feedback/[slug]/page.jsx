@@ -5,8 +5,10 @@ import { useParams } from 'next/navigation'
 export default function FeedbackPage() {
     const { slug } = useParams()
     const [business, setBusiness] = useState(null)
-    const [rating, setRating] = useState(0)
-    const [hovered, setHovered] = useState(0)
+    const [categories, setCategories] = useState(['Overall experience'])
+    const [categoryRatings, setCategoryRatings] = useState({})
+    const [hoveredCategory, setHoveredCategory] = useState({})
+    const [overallRating, setOverallRating] = useState(0)
     const [feedback, setFeedback] = useState('')
     const [name, setName] = useState('')
     const [step, setStep] = useState('rating')
@@ -17,15 +19,30 @@ export default function FeedbackPage() {
         fetch(`/api/business/public?slug=${slug}`)
             .then(r => r.json())
             .then(d => {
-                if (d.business) setBusiness(d.business)
+                if (d.business) {
+                    setBusiness(d.business)
+                    if (d.business.rating_categories?.length) {
+                        setCategories(d.business.rating_categories)
+                    }
+                }
                 setPageLoading(false)
             })
             .catch(() => setPageLoading(false))
     }, [slug])
 
-    const handleRating = (val) => {
-        setRating(val)
-        setStep(val >= 4 ? 'happy' : 'sad')
+    const handleCategoryRating = (category, value) => {
+        const updated = { ...categoryRatings, [category]: value }
+        setCategoryRatings(updated)
+        const values = Object.values(updated)
+        const avg = Math.round(values.reduce((s, v) => s + v, 0) / values.length)
+        setOverallRating(avg)
+        if (Object.keys(updated).length === categories.length) {
+            setTimeout(() => setStep(avg >= 4 ? 'happy' : 'sad'), 400)
+        }
+    }
+
+    const allCategoriesRated = () => {
+        return categories.every(cat => categoryRatings[cat])
     }
 
     const submitFeedback = async (isPublic) => {
@@ -36,9 +53,10 @@ export default function FeedbackPage() {
             body: JSON.stringify({
                 businessId: business.id,
                 customerName: name,
-                rating,
+                rating: overallRating,
                 feedback,
-                isPublic
+                isPublic,
+                categoryRatings
             })
         })
         setLoading(false)
@@ -56,7 +74,10 @@ export default function FeedbackPage() {
         setStep('done')
     }
 
-    const labels = { 1: 'Poor', 2: 'Not great', 3: 'OK', 4: 'Good', 5: 'Excellent!' }
+    const handleNoThanks = async () => {
+        await submitFeedback(false)
+        setStep('done')
+    }
 
     if (pageLoading) return (
         <div style={centerStyle}>
@@ -78,42 +99,80 @@ export default function FeedbackPage() {
                     {business.name.slice(0, 2).toUpperCase()}
                 </div>
 
+                {/* STEP 1 — Category ratings */}
                 {step === 'rating' && (
                     <>
                         <h1 style={titleStyle}>How was your experience?</h1>
                         <p style={subStyle}>at {business.name}</p>
-                        <div style={starRowStyle}>
-                            {[1, 2, 3, 4, 5].map(s => (
-                                <span
-                                    key={s}
-                                    onClick={() => handleRating(s)}
-                                    onMouseEnter={() => setHovered(s)}
-                                    onMouseLeave={() => setHovered(0)}
-                                    style={{
-                                        fontSize: '2.8rem',
-                                        cursor: 'pointer',
-                                        userSelect: 'none',
-                                        transition: 'transform 0.15s',
-                                        transform: hovered >= s || rating >= s ? 'scale(1.2)' : 'scale(1)',
-                                        opacity: hovered >= s || rating >= s ? 1 : 0.25
-                                    }}
-                                >★</span>
+
+                        <div style={{ width: '100%', marginBottom: '1.5rem' }}>
+                            {categories.map(cat => (
+                                <div key={cat} style={catRowStyle}>
+                                    <div style={catLabelStyle}>{cat}</div>
+                                    <div style={starRowStyle}>
+                                        {[1, 2, 3, 4, 5].map(s => (
+                                            <span
+                                                key={s}
+                                                onClick={() => handleCategoryRating(cat, s)}
+                                                onMouseEnter={() => setHoveredCategory({ ...hoveredCategory, [cat]: s })}
+                                                onMouseLeave={() => setHoveredCategory({ ...hoveredCategory, [cat]: 0 })}
+                                                style={{
+                                                    fontSize: '1.8rem',
+                                                    cursor: 'pointer',
+                                                    userSelect: 'none',
+                                                    transition: 'transform 0.1s',
+                                                    transform: (hoveredCategory[cat] >= s || categoryRatings[cat] >= s)
+                                                        ? 'scale(1.2)' : 'scale(1)',
+                                                    opacity: (hoveredCategory[cat] >= s || categoryRatings[cat] >= s)
+                                                        ? 1 : 0.25
+                                                }}
+                                            >★</span>
+                                        ))}
+                                    </div>
+                                </div>
                             ))}
                         </div>
-                        <p style={{ color: '#888', fontSize: '0.85rem', minHeight: '1.2rem' }}>
-                            {hovered ? labels[hovered] : rating ? labels[rating] : 'Tap a star'}
-                        </p>
+
+                        {allCategoriesRated() && (
+                            <button
+                                onClick={() => setStep(overallRating >= 4 ? 'happy' : 'sad')}
+                                style={btnPrimaryStyle}
+                            >
+                                Continue
+                            </button>
+                        )}
+
+                        {!allCategoriesRated() && (
+                            <p style={{ fontSize: '0.8rem', color: '#aaa' }}>
+                                Rate each category to continue
+                            </p>
+                        )}
                     </>
                 )}
 
+                {/* STEP 2A — Happy */}
                 {step === 'happy' && (
                     <>
                         <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🙌</div>
                         <h1 style={titleStyle}>Glad you loved it!</h1>
-                        <p style={{ color: '#888', fontSize: '0.875rem', marginBottom: '1.5rem', lineHeight: 1.6 }}>
-                            Would you mind leaving a quick Google review?
+
+                        {/* Show their ratings summary */}
+                        <div style={summaryStyle}>
+                            {categories.map(cat => (
+                                <div key={cat} style={summaryRowStyle}>
+                                    <span style={{ fontSize: '0.8rem', color: '#555' }}>{cat}</span>
+                                    <span style={{ color: '#f59e0b', fontSize: '0.8rem' }}>
+                                        {'★'.repeat(categoryRatings[cat] || 0)}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+
+                        <p style={{ color: '#888', fontSize: '0.875rem', marginBottom: '1.25rem', lineHeight: 1.6 }}>
+                            Would you mind sharing on Google?
                             It really helps us reach more people.
                         </p>
+
                         <input
                             type="text"
                             placeholder="Your name (optional)"
@@ -121,29 +180,39 @@ export default function FeedbackPage() {
                             onChange={e => setName(e.target.value)}
                             style={{ ...inputStyle, marginBottom: '0.75rem' }}
                         />
+
                         <button onClick={handleGoogle} style={btnPrimaryStyle}>
                             ⭐ Leave a Google review
                         </button>
-                        <button
-                            onClick={async () => {
-                                await submitFeedback(false)
-                                setStep('done')
-                            }}
-                            style={btnGhostStyle}
-                        >
+                        <button onClick={handleNoThanks} style={btnGhostStyle}>
                             No thanks
                         </button>
                     </>
                 )}
 
+                {/* STEP 2B — Sad */}
                 {step === 'sad' && (
                     <>
                         <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>😔</div>
                         <h1 style={titleStyle}>Sorry to hear that</h1>
-                        <p style={{ color: '#888', fontSize: '0.875rem', marginBottom: '1.5rem', lineHeight: 1.6 }}>
+
+                        {/* Show their ratings summary */}
+                        <div style={summaryStyle}>
+                            {categories.map(cat => (
+                                <div key={cat} style={summaryRowStyle}>
+                                    <span style={{ fontSize: '0.8rem', color: '#555' }}>{cat}</span>
+                                    <span style={{ color: '#f59e0b', fontSize: '0.8rem' }}>
+                                        {'★'.repeat(categoryRatings[cat] || 0)}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+
+                        <p style={{ color: '#888', fontSize: '0.875rem', marginBottom: '1.25rem', lineHeight: 1.6 }}>
                             Tell us what went wrong — we will make it right.
                             This stays completely private.
                         </p>
+
                         <input
                             type="text"
                             placeholder="Your name (optional)"
@@ -151,6 +220,7 @@ export default function FeedbackPage() {
                             onChange={e => setName(e.target.value)}
                             style={{ ...inputStyle, marginBottom: '0.75rem' }}
                         />
+
                         <textarea
                             rows={4}
                             placeholder="What went wrong? We want to fix it..."
@@ -158,6 +228,7 @@ export default function FeedbackPage() {
                             onChange={e => setFeedback(e.target.value)}
                             style={{ ...inputStyle, resize: 'none', marginBottom: '0.75rem' }}
                         />
+
                         <button
                             onClick={handlePrivate}
                             disabled={loading || !feedback.trim()}
@@ -171,11 +242,12 @@ export default function FeedbackPage() {
                     </>
                 )}
 
+                {/* STEP 3 — Done */}
                 {step === 'done' && (
                     <>
                         <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🙏</div>
                         <h1 style={titleStyle}>Thank you!</h1>
-                        <p style={{ color: '#888', fontSize: '0.875rem' }}>
+                        <p style={{ color: '#888', fontSize: '0.875rem', lineHeight: 1.6 }}>
                             Your feedback means a lot to {business.name}.
                         </p>
                     </>
@@ -206,15 +278,15 @@ const cardStyle = {
     background: '#fff',
     border: '1px solid #e5e5e5',
     borderRadius: '20px',
-    padding: '2.5rem 2rem',
-    maxWidth: '420px',
+    padding: '2rem',
+    maxWidth: '440px',
     width: '100%',
     textAlign: 'center'
 }
 
 const avatarStyle = {
-    width: '60px',
-    height: '60px',
+    width: '56px',
+    height: '56px',
     borderRadius: '14px',
     background: '#f0fdf4',
     border: '1px solid #bbf7d0',
@@ -222,7 +294,7 @@ const avatarStyle = {
     alignItems: 'center',
     justifyContent: 'center',
     margin: '0 auto 1.25rem',
-    fontSize: '1.2rem',
+    fontSize: '1.1rem',
     fontWeight: '700',
     color: '#16a34a'
 }
@@ -240,11 +312,39 @@ const subStyle = {
     marginBottom: '1.5rem'
 }
 
+const catRowStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '0.5rem 0',
+    borderBottom: '1px solid #f3f4f6'
+}
+
+const catLabelStyle = {
+    fontSize: '0.875rem',
+    color: '#333',
+    textAlign: 'left',
+    flex: 1
+}
+
 const starRowStyle = {
     display: 'flex',
-    justifyContent: 'center',
-    gap: '0.5rem',
-    marginBottom: '0.5rem'
+    gap: '0.125rem'
+}
+
+const summaryStyle = {
+    background: '#f9fafb',
+    borderRadius: '10px',
+    padding: '0.875rem',
+    marginBottom: '1.25rem',
+    width: '100%'
+}
+
+const summaryRowStyle = {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '0.25rem 0'
 }
 
 const inputStyle = {
