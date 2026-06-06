@@ -33,11 +33,22 @@ export default function FeedbackPage() {
     const handleCategoryRating = (category, value) => {
         const updated = { ...categoryRatings, [category]: value }
         setCategoryRatings(updated)
+
         const values = Object.values(updated)
         const avg = Math.round(values.reduce((s, v) => s + v, 0) / values.length)
         setOverallRating(avg)
+
         if (Object.keys(updated).length === categories.length) {
-            setTimeout(() => setStep(avg >= 4 ? 'happy' : 'sad'), 400)
+            const hasLowRating = Object.values(updated).some(v => v <= 2)
+            const isOverallGood = avg >= 4
+
+            if (hasLowRating && isOverallGood) {
+                setTimeout(() => setStep('mixed'), 400)
+            } else if (isOverallGood) {
+                setTimeout(() => setStep('happy'), 400)
+            } else {
+                setTimeout(() => setStep('sad'), 400)
+            }
         }
     }
 
@@ -64,7 +75,9 @@ export default function FeedbackPage() {
 
     const handleGoogle = async () => {
         await submitFeedback(true)
-        window.open(business.google_review_link, '_blank')
+        if (business.google_review_link) {
+            window.open(business.google_review_link, '_blank')
+        }
         setStep('done')
     }
 
@@ -78,6 +91,10 @@ export default function FeedbackPage() {
         await submitFeedback(false)
         setStep('done')
     }
+
+    const lowCategories = Object.entries(categoryRatings)
+        .filter(([_, v]) => v <= 2)
+        .map(([k]) => k)
 
     if (pageLoading) return (
         <div style={centerStyle}>
@@ -99,7 +116,7 @@ export default function FeedbackPage() {
                     {business.name.slice(0, 2).toUpperCase()}
                 </div>
 
-                {/* STEP 1 — Category ratings */}
+                {/* STEP 1 — Rate each category */}
                 {step === 'rating' && (
                     <>
                         <h1 style={titleStyle}>How was your experience?</h1>
@@ -133,15 +150,6 @@ export default function FeedbackPage() {
                             ))}
                         </div>
 
-                        {allCategoriesRated() && (
-                            <button
-                                onClick={() => setStep(overallRating >= 4 ? 'happy' : 'sad')}
-                                style={btnPrimaryStyle}
-                            >
-                                Continue
-                            </button>
-                        )}
-
                         {!allCategoriesRated() && (
                             <p style={{ fontSize: '0.8rem', color: '#aaa' }}>
                                 Rate each category to continue
@@ -150,13 +158,12 @@ export default function FeedbackPage() {
                     </>
                 )}
 
-                {/* STEP 2A — Happy */}
+                {/* STEP 2A — All good */}
                 {step === 'happy' && (
                     <>
                         <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🙌</div>
                         <h1 style={titleStyle}>Glad you loved it!</h1>
 
-                        {/* Show their ratings summary */}
                         <div style={summaryStyle}>
                             {categories.map(cat => (
                                 <div key={cat} style={summaryRowStyle}>
@@ -190,18 +197,73 @@ export default function FeedbackPage() {
                     </>
                 )}
 
-                {/* STEP 2B — Sad */}
+                {/* STEP 2B — Mixed — good overall but one category low */}
+                {step === 'mixed' && (
+                    <>
+                        <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>😊</div>
+                        <h1 style={titleStyle}>Glad you mostly loved it!</h1>
+
+                        <div style={summaryStyle}>
+                            {categories.map(cat => (
+                                <div key={cat} style={summaryRowStyle}>
+                                    <span style={{ fontSize: '0.8rem', color: '#555' }}>{cat}</span>
+                                    <span style={{
+                                        color: categoryRatings[cat] <= 2 ? '#dc2626' : '#f59e0b',
+                                        fontSize: '0.8rem'
+                                    }}>
+                                        {'★'.repeat(categoryRatings[cat] || 0)}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+
+                        <p style={{ color: '#888', fontSize: '0.875rem', marginBottom: '1rem', lineHeight: 1.6 }}>
+                            Before you share on Google — tell us what we can improve on{' '}
+                            <strong style={{ color: '#111' }}>
+                                {lowCategories.join(' and ')}
+                            </strong>.
+                            This stays completely private.
+                        </p>
+
+                        <input
+                            type="text"
+                            placeholder="Your name (optional)"
+                            value={name}
+                            onChange={e => setName(e.target.value)}
+                            style={{ ...inputStyle, marginBottom: '0.75rem' }}
+                        />
+
+                        <textarea
+                            rows={3}
+                            placeholder={`What could we improve on ${lowCategories.join(' and ')}?`}
+                            value={feedback}
+                            onChange={e => setFeedback(e.target.value)}
+                            style={{ ...inputStyle, resize: 'none', marginBottom: '0.75rem' }}
+                        />
+
+                        <button onClick={handleGoogle} style={btnPrimaryStyle}>
+                            ⭐ Leave a Google review
+                        </button>
+                        <button onClick={handleNoThanks} style={btnGhostStyle}>
+                            No thanks
+                        </button>
+                    </>
+                )}
+
+                {/* STEP 2C — All bad */}
                 {step === 'sad' && (
                     <>
                         <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>😔</div>
                         <h1 style={titleStyle}>Sorry to hear that</h1>
 
-                        {/* Show their ratings summary */}
                         <div style={summaryStyle}>
                             {categories.map(cat => (
                                 <div key={cat} style={summaryRowStyle}>
                                     <span style={{ fontSize: '0.8rem', color: '#555' }}>{cat}</span>
-                                    <span style={{ color: '#f59e0b', fontSize: '0.8rem' }}>
+                                    <span style={{
+                                        color: categoryRatings[cat] <= 2 ? '#dc2626' : '#f59e0b',
+                                        fontSize: '0.8rem'
+                                    }}>
                                         {'★'.repeat(categoryRatings[cat] || 0)}
                                     </span>
                                 </div>
@@ -316,7 +378,7 @@ const catRowStyle = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '0.5rem 0',
+    padding: '0.625rem 0',
     borderBottom: '1px solid #f3f4f6'
 }
 

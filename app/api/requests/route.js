@@ -26,7 +26,8 @@ export async function POST(req) {
             .replace(/\s/g, '')
             .replace(/^0/, '+27')
 
-        const scheduledFor = new Date(Date.now() + 60 * 60 * 1000)
+        const delayMinutes = body.delayMinutes ?? 60
+        const scheduledFor = new Date(Date.now() + delayMinutes * 60 * 1000)
 
         const { data: request, error } = await supabaseAdmin
             .from('requests')
