@@ -124,7 +124,13 @@ export default function FeedbackPage() {
                         <button onClick={handleGoogle} style={btnPrimaryStyle}>
                             ⭐ Leave a Google review
                         </button>
-                        <button onClick={() => setStep('done')} style={btnGhostStyle}>
+                        <button
+                            onClick={async () => {
+                                await submitFeedback(false)
+                                setStep('done')
+                            }}
+                            style={btnGhostStyle}
+                        >
                             No thanks
                         </button>
                     </>
