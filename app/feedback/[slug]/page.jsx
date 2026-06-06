@@ -10,6 +10,7 @@ export default function FeedbackPage() {
     const [hoveredCategory, setHoveredCategory] = useState({})
     const [overallRating, setOverallRating] = useState(0)
     const [feedback, setFeedback] = useState('')
+    const [complement, setComplement] = useState('')
     const [name, setName] = useState('')
     const [step, setStep] = useState('rating')
     const [loading, setLoading] = useState(false)
@@ -33,15 +34,12 @@ export default function FeedbackPage() {
     const handleCategoryRating = (category, value) => {
         const updated = { ...categoryRatings, [category]: value }
         setCategoryRatings(updated)
-
         const values = Object.values(updated)
         const avg = Math.round(values.reduce((s, v) => s + v, 0) / values.length)
         setOverallRating(avg)
-
         if (Object.keys(updated).length === categories.length) {
             const hasLowRating = Object.values(updated).some(v => v <= 2)
             const isOverallGood = avg >= 4
-
             if (hasLowRating && isOverallGood) {
                 setTimeout(() => setStep('mixed'), 400)
             } else if (isOverallGood) {
@@ -52,9 +50,7 @@ export default function FeedbackPage() {
         }
     }
 
-    const allCategoriesRated = () => {
-        return categories.every(cat => categoryRatings[cat])
-    }
+    const allCategoriesRated = () => categories.every(cat => categoryRatings[cat])
 
     const submitFeedback = async (isPublic) => {
         setLoading(true)
@@ -65,7 +61,7 @@ export default function FeedbackPage() {
                 businessId: business.id,
                 customerName: name,
                 rating: overallRating,
-                feedback,
+                feedback: feedback || complement || null,
                 isPublic,
                 categoryRatings
             })
@@ -116,12 +112,11 @@ export default function FeedbackPage() {
                     {business.name.slice(0, 2).toUpperCase()}
                 </div>
 
-                {/* STEP 1 — Rate each category */}
+                {/* STEP 1 — Rate categories */}
                 {step === 'rating' && (
                     <>
                         <h1 style={titleStyle}>How was your experience?</h1>
                         <p style={subStyle}>at {business.name}</p>
-
                         <div style={{ width: '100%', marginBottom: '1.5rem' }}>
                             {categories.map(cat => (
                                 <div key={cat} style={catRowStyle}>
@@ -149,7 +144,6 @@ export default function FeedbackPage() {
                                 </div>
                             ))}
                         </div>
-
                         {!allCategoriesRated() && (
                             <p style={{ fontSize: '0.8rem', color: '#aaa' }}>
                                 Rate each category to continue
@@ -162,8 +156,7 @@ export default function FeedbackPage() {
                 {step === 'happy' && (
                     <>
                         <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🙌</div>
-                        <h1 style={titleStyle}>Glad you loved it!</h1>
-
+                        <h1 style={titleStyle}>You gave us 5 stars!</h1>
                         <div style={summaryStyle}>
                             {categories.map(cat => (
                                 <div key={cat} style={summaryRowStyle}>
@@ -174,12 +167,10 @@ export default function FeedbackPage() {
                                 </div>
                             ))}
                         </div>
-
-                        <p style={{ color: '#888', fontSize: '0.875rem', marginBottom: '1.25rem', lineHeight: 1.6 }}>
-                            Would you mind sharing on Google?
-                            It really helps us reach more people.
+                        <p style={{ color: '#888', fontSize: '0.875rem', marginBottom: '1rem', lineHeight: 1.6 }}>
+                            What did you love most? Leave us a compliment —
+                            it means the world to our team 💛
                         </p>
-
                         <input
                             type="text"
                             placeholder="Your name (optional)"
@@ -187,9 +178,15 @@ export default function FeedbackPage() {
                             onChange={e => setName(e.target.value)}
                             style={{ ...inputStyle, marginBottom: '0.75rem' }}
                         />
-
+                        <textarea
+                            rows={3}
+                            placeholder="What did you love? (optional)"
+                            value={complement}
+                            onChange={e => setComplement(e.target.value)}
+                            style={{ ...inputStyle, resize: 'none', marginBottom: '0.75rem' }}
+                        />
                         <button onClick={handleGoogle} style={btnPrimaryStyle}>
-                            ⭐ Leave a Google review
+                            ⭐ Share on Google
                         </button>
                         <button onClick={handleNoThanks} style={btnGhostStyle}>
                             No thanks
@@ -197,12 +194,11 @@ export default function FeedbackPage() {
                     </>
                 )}
 
-                {/* STEP 2B — Mixed — good overall but one category low */}
+                {/* STEP 2B — Mixed */}
                 {step === 'mixed' && (
                     <>
                         <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>😊</div>
                         <h1 style={titleStyle}>Glad you mostly loved it!</h1>
-
                         <div style={summaryStyle}>
                             {categories.map(cat => (
                                 <div key={cat} style={summaryRowStyle}>
@@ -216,7 +212,6 @@ export default function FeedbackPage() {
                                 </div>
                             ))}
                         </div>
-
                         <p style={{ color: '#888', fontSize: '0.875rem', marginBottom: '1rem', lineHeight: 1.6 }}>
                             Before you share on Google — tell us what we can improve on{' '}
                             <strong style={{ color: '#111' }}>
@@ -224,7 +219,6 @@ export default function FeedbackPage() {
                             </strong>.
                             This stays completely private.
                         </p>
-
                         <input
                             type="text"
                             placeholder="Your name (optional)"
@@ -232,7 +226,6 @@ export default function FeedbackPage() {
                             onChange={e => setName(e.target.value)}
                             style={{ ...inputStyle, marginBottom: '0.75rem' }}
                         />
-
                         <textarea
                             rows={3}
                             placeholder={`What could we improve on ${lowCategories.join(' and ')}?`}
@@ -240,9 +233,8 @@ export default function FeedbackPage() {
                             onChange={e => setFeedback(e.target.value)}
                             style={{ ...inputStyle, resize: 'none', marginBottom: '0.75rem' }}
                         />
-
                         <button onClick={handleGoogle} style={btnPrimaryStyle}>
-                            ⭐ Leave a Google review
+                            ⭐ Share on Google
                         </button>
                         <button onClick={handleNoThanks} style={btnGhostStyle}>
                             No thanks
@@ -255,7 +247,6 @@ export default function FeedbackPage() {
                     <>
                         <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>😔</div>
                         <h1 style={titleStyle}>Sorry to hear that</h1>
-
                         <div style={summaryStyle}>
                             {categories.map(cat => (
                                 <div key={cat} style={summaryRowStyle}>
@@ -269,12 +260,10 @@ export default function FeedbackPage() {
                                 </div>
                             ))}
                         </div>
-
                         <p style={{ color: '#888', fontSize: '0.875rem', marginBottom: '1.25rem', lineHeight: 1.6 }}>
                             Tell us what went wrong — we will make it right.
                             This stays completely private.
                         </p>
-
                         <input
                             type="text"
                             placeholder="Your name (optional)"
@@ -282,7 +271,6 @@ export default function FeedbackPage() {
                             onChange={e => setName(e.target.value)}
                             style={{ ...inputStyle, marginBottom: '0.75rem' }}
                         />
-
                         <textarea
                             rows={4}
                             placeholder="What went wrong? We want to fix it..."
@@ -290,7 +278,6 @@ export default function FeedbackPage() {
                             onChange={e => setFeedback(e.target.value)}
                             style={{ ...inputStyle, resize: 'none', marginBottom: '0.75rem' }}
                         />
-
                         <button
                             onClick={handlePrivate}
                             disabled={loading || !feedback.trim()}
@@ -320,127 +307,17 @@ export default function FeedbackPage() {
     )
 }
 
-const centerStyle = {
-    minHeight: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center'
-}
-
-const containerStyle = {
-    minHeight: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '1rem',
-    background: '#fafafa'
-}
-
-const cardStyle = {
-    background: '#fff',
-    border: '1px solid #e5e5e5',
-    borderRadius: '20px',
-    padding: '2rem',
-    maxWidth: '440px',
-    width: '100%',
-    textAlign: 'center'
-}
-
-const avatarStyle = {
-    width: '56px',
-    height: '56px',
-    borderRadius: '14px',
-    background: '#f0fdf4',
-    border: '1px solid #bbf7d0',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    margin: '0 auto 1.25rem',
-    fontSize: '1.1rem',
-    fontWeight: '700',
-    color: '#16a34a'
-}
-
-const titleStyle = {
-    fontSize: '1.3rem',
-    fontWeight: '600',
-    marginBottom: '0.5rem',
-    color: '#111'
-}
-
-const subStyle = {
-    color: '#888',
-    fontSize: '0.875rem',
-    marginBottom: '1.5rem'
-}
-
-const catRowStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '0.625rem 0',
-    borderBottom: '1px solid #f3f4f6'
-}
-
-const catLabelStyle = {
-    fontSize: '0.875rem',
-    color: '#333',
-    textAlign: 'left',
-    flex: 1
-}
-
-const starRowStyle = {
-    display: 'flex',
-    gap: '0.125rem'
-}
-
-const summaryStyle = {
-    background: '#f9fafb',
-    borderRadius: '10px',
-    padding: '0.875rem',
-    marginBottom: '1.25rem',
-    width: '100%'
-}
-
-const summaryRowStyle = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '0.25rem 0'
-}
-
-const inputStyle = {
-    width: '100%',
-    padding: '0.75rem 1rem',
-    borderRadius: '8px',
-    border: '1px solid #e5e5e5',
-    fontSize: '0.9rem',
-    outline: 'none',
-    boxSizing: 'border-box',
-    fontFamily: 'inherit',
-    textAlign: 'left'
-}
-
-const btnPrimaryStyle = {
-    width: '100%',
-    padding: '0.875rem',
-    borderRadius: '10px',
-    background: '#111',
-    color: '#fff',
-    fontSize: '0.95rem',
-    fontWeight: '600',
-    border: 'none',
-    cursor: 'pointer',
-    marginBottom: '0.75rem'
-}
-
-const btnGhostStyle = {
-    width: '100%',
-    padding: '0.75rem',
-    borderRadius: '10px',
-    background: 'transparent',
-    color: '#888',
-    fontSize: '0.875rem',
-    border: '1px solid #e5e5e5',
-    cursor: 'pointer'
-}
+const centerStyle = { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }
+const containerStyle = { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', background: '#fafafa' }
+const cardStyle = { background: '#fff', border: '1px solid #e5e5e5', borderRadius: '20px', padding: '2rem', maxWidth: '440px', width: '100%', textAlign: 'center' }
+const avatarStyle = { width: '56px', height: '56px', borderRadius: '14px', background: '#f0fdf4', border: '1px solid #bbf7d0', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem', fontSize: '1.1rem', fontWeight: '700', color: '#16a34a' }
+const titleStyle = { fontSize: '1.3rem', fontWeight: '600', marginBottom: '0.5rem', color: '#111' }
+const subStyle = { color: '#888', fontSize: '0.875rem', marginBottom: '1.5rem' }
+const catRowStyle = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.625rem 0', borderBottom: '1px solid #f3f4f6' }
+const catLabelStyle = { fontSize: '0.875rem', color: '#333', textAlign: 'left', flex: 1 }
+const starRowStyle = { display: 'flex', gap: '0.125rem' }
+const summaryStyle = { background: '#f9fafb', borderRadius: '10px', padding: '0.875rem', marginBottom: '1.25rem', width: '100%' }
+const summaryRowStyle = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.25rem 0' }
+const inputStyle = { width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #e5e5e5', fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', textAlign: 'left' }
+const btnPrimaryStyle = { width: '100%', padding: '0.875rem', borderRadius: '10px', background: '#111', color: '#fff', fontSize: '0.95rem', fontWeight: '600', border: 'none', cursor: 'pointer', marginBottom: '0.75rem' }
+const btnGhostStyle = { width: '100%', padding: '0.75rem', borderRadius: '10px', background: 'transparent', color: '#888', fontSize: '0.875rem', border: '1px solid #e5e5e5', cursor: 'pointer' }
