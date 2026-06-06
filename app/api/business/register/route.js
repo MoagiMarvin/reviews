@@ -1,37 +1,62 @@
-import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export async function POST(req) {
-  const { name, email, password, googleReviewLink } = await req.json()
+    try {
+        const { name, email, password, googleReviewLink } = await req.json()
 
-  const { data, error } = await supabaseAdmin.auth.admin.createUser({
-    email,
-    password,
-    user_metadata: { role: 'business' }
-  })
+        if (!name || !email || !password) {
+            return Response.json(
+                { error: 'Name, email and password are required' },
+                { status: 400 }
+            )
+        }
 
-  if (error) {
-    return Response.json({ error: error.message }, { status: 400 })
-  }
+        // Create auth user
+        const { data: authData, error: authError } = await supabaseAdmin
+            .auth.admin.createUser({
+                email,
+                password,
+                email_confirm: true
+            })
 
-  const slug = name
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, '-')
-    .replace(/-+/g, '-')
-    .trim()
+        if (authError) {
+            return Response.json(
+                { error: authError.message },
+                { status: 400 }
+            )
+        }
 
-  const { error: bizError } = await supabaseAdmin
-    .from('businesses')
-    .insert({
-      id: data.user.id,
-      name,
-      slug,
-      email,
-      google_review_link: googleReviewLink
-    })
+        // Create slug from business name
+        const slug = name
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9]/g, '-')
+            .replace(/-+/g, '-')
 
-  if (bizError) {
-    return Response.json({ error: bizError.message }, { status: 400 })
-  }
+        // Save business to database
+        const { error: bizError } = await supabaseAdmin
+            .from('businesses')
+            .insert({
+                id: authData.user.id,
+                name,
+                slug,
+                email,
+                google_review_link: googleReviewLink || null
+            })
 
-  return Response.json({ success: true, slug })
+        if (bizError) {
+            return Response.json(
+                { error: bizError.message },
+                { status: 400 }
+            )
+        }
+
+        return Response.json({ success: true })
+
+    } catch (err) {
+        return Response.json(
+            { error: err.message },
+            { status: 500 }
+        )
+    }
 }

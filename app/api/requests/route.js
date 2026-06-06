@@ -1,82 +1,98 @@
-import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import { Client } from '@upstash/qstash'
-
-const qstash = new Client({
-  token: process.env.QSTASH_TOKEN
-})
+import { supabaseAdmin } from '@/lib/supabase'
+import { cookies } from 'next/headers'
 
 export async function POST(req) {
-  const {
-    businessId,
-    customerNumber,
-    customerName
-  } = await req.json()
+    try {
+        const cookieStore = await cookies()
+        const businessId = cookieStore.get('business_id')?.value
 
-  if (!businessId || !customerNumber) {
-    return Response.json(
-      { error: 'Missing required fields' },
-      { status: 400 }
-    )
-  }
+        if (!businessId) {
+            return Response.json(
+                { error: 'Not logged in' },
+                { status: 401 }
+            )
+        }
 
-  const formattedNumber = customerNumber
-    .replace(/\s/g, '')
-    .replace(/^0/, '+27')
+        const { customerNumber, customerName } = await req.json()
 
-  const scheduledFor = new Date(Date.now() + 60 * 60 * 1000)
+        if (!customerNumber) {
+            return Response.json(
+                { error: 'Customer number is required' },
+                { status: 400 }
+            )
+        }
 
-  const { data: request, error } = await supabaseAdmin
-    .from('requests')
-    .insert({
-      business_id: businessId,
-      customer_number: formattedNumber,
-      customer_name: customerName || null,
-      status: 'pending',
-      scheduled_for: scheduledFor
-    })
-    .select()
-    .single()
+        const formatted = customerNumber
+            .replace(/\s/g, '')
+            .replace(/^0/, '+27')
 
-  if (error) {
-    return Response.json(
-      { error: error.message },
-      { status: 400 }
-    )
-  }
+        const scheduledFor = new Date(Date.now() + 60 * 60 * 1000)
 
-  await qstash.publishJSON({
-    url: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhook`,
-    delay: 3600,
-    body: { requestId: request.id }
-  })
+        const { data: request, error } = await supabaseAdmin
+            .from('requests')
+            .insert({
+                business_id: businessId,
+                customer_number: formatted,
+                customer_name: customerName || null,
+                status: 'pending',
+                scheduled_for: scheduledFor
+            })
+            .select()
+            .single()
 
-  return Response.json({ success: true, requestId: request.id })
+        if (error) {
+            return Response.json(
+                { error: error.message },
+                { status: 400 }
+            )
+        }
+
+        return Response.json({
+            success: true,
+            requestId: request.id,
+            scheduledFor
+        })
+
+    } catch (err) {
+        return Response.json(
+            { error: err.message },
+            { status: 500 }
+        )
+    }
 }
 
-export async function GET(req) {
-  const { searchParams } = new URL(req.url)
-  const businessId = searchParams.get('businessId')
+export async function GET() {
+    try {
+        const cookieStore = await cookies()
+        const businessId = cookieStore.get('business_id')?.value
 
-  if (!businessId) {
-    return Response.json(
-      { error: 'Missing businessId' },
-      { status: 400 }
-    )
-  }
+        if (!businessId) {
+            return Response.json(
+                { error: 'Not logged in' },
+                { status: 401 }
+            )
+        }
 
-  const { data, error } = await supabaseAdmin
-    .from('requests')
-    .select('*')
-    .eq('business_id', businessId)
-    .order('created_at', { ascending: false })
-    .limit(50)
+        const { data, error } = await supabaseAdmin
+            .from('requests')
+            .select('*')
+            .eq('business_id', businessId)
+            .order('created_at', { ascending: false })
+            .limit(50)
 
-  if (error) {
-    return Response.json(
-      { error: error.message },
-      { status: 400 }
-    )
-  }
+        if (error) {
+            return Response.json(
+                { error: error.message },
+                { status: 400 }
+            )
+        }
 
-  return Response.json({ requests: data })
+        return Response.json({ requests: data })
+
+    } catch (err) {
+        return Response.json(
+            { error: err.message },
+            { status: 500 }
+        )
+    }
 }
