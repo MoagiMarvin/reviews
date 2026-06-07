@@ -20,6 +20,7 @@ export async function GET() {
             .single()
 
         if (error) {
+            console.log('Settings GET error:', error)
             return Response.json(
                 { error: error.message },
                 { status: 400 }
@@ -29,6 +30,7 @@ export async function GET() {
         return Response.json({ settings: data })
 
     } catch (err) {
+        console.log('Settings GET catch:', err)
         return Response.json(
             { error: err.message },
             { status: 500 }
@@ -48,31 +50,35 @@ export async function POST(req) {
             )
         }
 
-        const {
-            sendDelayMinutes,
-            ratingCategories,
-            googleReviewLink
-        } = await req.json()
+        const body = await req.json()
+        console.log('Settings POST body:', body)
+
+        const sendDelayMinutes = body.sendDelayMinutes !== undefined
+            ? parseInt(body.sendDelayMinutes)
+            : 60
 
         const { error } = await supabaseAdmin
             .from('businesses')
             .update({
                 send_delay_minutes: sendDelayMinutes,
-                rating_categories: ratingCategories,
-                google_review_link: googleReviewLink
+                rating_categories: body.ratingCategories || [],
+                google_review_link: body.googleReviewLink || null
             })
             .eq('id', businessId)
 
         if (error) {
+            console.log('Settings POST error:', error)
             return Response.json(
                 { error: error.message },
                 { status: 400 }
             )
         }
 
+        console.log('Settings saved — delay:', sendDelayMinutes)
         return Response.json({ success: true })
 
     } catch (err) {
+        console.log('Settings POST catch:', err)
         return Response.json(
             { error: err.message },
             { status: 500 }

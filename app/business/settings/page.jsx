@@ -5,7 +5,7 @@ import Sidebar from '@/components/business/Sidebar'
 const PRESETS = {
     Restaurant: ['Food quality', 'Service', 'Atmosphere', 'Value for money'],
     Salon: ['Hair quality', 'Friendliness', 'Cleanliness', 'Value for money'],
-    Doctor: ['Wait time', 'Professionalism', 'Explanation of treatment', 'Friendliness'],
+    Doctor: ['Wait time', 'Professionalism', 'Explanation', 'Friendliness'],
     Lawyer: ['Communication', 'Professionalism', 'Value for money', 'Response time'],
     'Estate Agent': ['Communication', 'Knowledge', 'Professionalism', 'Response time'],
     General: ['Overall experience']
@@ -39,16 +39,27 @@ export default function SettingsPage() {
                 fetch('/api/business/me'),
                 fetch('/api/business/settings')
             ])
+
             const bizData = await bizRes.json()
             const settingsData = await settingsRes.json()
 
+            console.log('Settings loaded:', settingsData)
+
             if (bizData.business) setBusiness(bizData.business)
+
             if (settingsData.settings) {
-                setDelay(settingsData.settings.send_delay_minutes || 60)
-                setCategories(settingsData.settings.rating_categories || ['Overall experience'])
-                setGoogleLink(settingsData.settings.google_review_link || '')
+                const s = settingsData.settings
+                // Handle 0 (instant) correctly
+                setDelay(s.send_delay_minutes !== null && s.send_delay_minutes !== undefined
+                    ? s.send_delay_minutes
+                    : 60)
+                setCategories(s.rating_categories?.length
+                    ? s.rating_categories
+                    : ['Overall experience'])
+                setGoogleLink(s.google_review_link || '')
             }
         } catch (err) {
+            console.log('Load settings error:', err)
             setError('Failed to load settings')
         } finally {
             setLoading(false)
@@ -59,6 +70,8 @@ export default function SettingsPage() {
         setSaving(true)
         setError('')
         setSaved(false)
+
+        console.log('Saving delay:', delay)
 
         const res = await fetch('/api/business/settings', {
             method: 'POST',
@@ -71,6 +84,7 @@ export default function SettingsPage() {
         })
 
         const data = await res.json()
+        console.log('Save response:', data)
 
         if (data.error) {
             setError(data.error)
@@ -112,9 +126,7 @@ export default function SettingsPage() {
                 <div style={pageStyle}>
 
                     <h1 style={pageTitleStyle}>Settings</h1>
-                    <p style={pageSubStyle}>
-                        Manage your feedback preferences
-                    </p>
+                    <p style={pageSubStyle}>Manage your feedback preferences</p>
 
                     {error && <div style={errorStyle}>{error}</div>}
                     {saved && <div style={successStyle}>Settings saved ✓</div>}
@@ -161,6 +173,11 @@ export default function SettingsPage() {
                                 </button>
                             ))}
                         </div>
+                        <p style={{ ...hintStyle, marginTop: '0.75rem' }}>
+                            Currently selected: <strong>
+                                {DELAYS.find(d => d.value === delay)?.label || `${delay} minutes`}
+                            </strong>
+                        </p>
                     </div>
 
                     {/* Rating categories */}
@@ -170,7 +187,6 @@ export default function SettingsPage() {
                             What customers rate when they leave feedback
                         </p>
 
-                        {/* Presets */}
                         <p style={labelStyle}>Quick presets</p>
                         <div style={presetGridStyle}>
                             {Object.keys(PRESETS).map(preset => (
@@ -184,7 +200,6 @@ export default function SettingsPage() {
                             ))}
                         </div>
 
-                        {/* Current categories */}
                         <p style={{ ...labelStyle, marginTop: '1.25rem' }}>
                             Current categories
                         </p>
@@ -205,7 +220,6 @@ export default function SettingsPage() {
                             ))}
                         </div>
 
-                        {/* Add category */}
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                             <input
                                 type="text"
@@ -221,7 +235,11 @@ export default function SettingsPage() {
                         </div>
                     </div>
 
-                    <button onClick={handleSave} disabled={saving} style={saveBtnStyle}>
+                    <button
+                        onClick={handleSave}
+                        disabled={saving}
+                        style={saveBtnStyle}
+                    >
                         {saving ? 'Saving...' : 'Save settings'}
                     </button>
 
@@ -231,181 +249,25 @@ export default function SettingsPage() {
     )
 }
 
-const centerStyle = {
-    minHeight: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center'
-}
-
-const layoutStyle = {
-    display: 'flex',
-    minHeight: '100vh',
-    background: '#fafafa'
-}
-
-const mainStyle = {
-    marginLeft: '220px',
-    flex: 1,
-    overflow: 'auto'
-}
-
-const pageStyle = {
-    maxWidth: '680px',
-    margin: '0 auto',
-    padding: '2rem 1.5rem'
-}
-
-const pageTitleStyle = {
-    fontSize: '1.4rem',
-    fontWeight: '600',
-    color: '#111',
-    marginBottom: '0.25rem'
-}
-
-const pageSubStyle = {
-    color: '#888',
-    fontSize: '0.875rem',
-    marginBottom: '1.5rem'
-}
-
-const cardStyle = {
-    background: '#fff',
-    border: '1px solid #e5e5e5',
-    borderRadius: '12px',
-    padding: '1.25rem',
-    marginBottom: '1rem'
-}
-
-const cardTitleStyle = {
-    fontSize: '0.95rem',
-    fontWeight: '600',
-    color: '#111',
-    marginBottom: '0.25rem'
-}
-
-const cardSubStyle = {
-    fontSize: '0.8rem',
-    color: '#888',
-    marginBottom: '1rem'
-}
-
-const inputStyle = {
-    width: '100%',
-    padding: '0.75rem 1rem',
-    borderRadius: '8px',
-    border: '1px solid #e5e5e5',
-    fontSize: '0.9rem',
-    outline: 'none',
-    boxSizing: 'border-box',
-    fontFamily: 'inherit',
-    marginBottom: '0.5rem'
-}
-
-const hintStyle = {
-    fontSize: '0.75rem',
-    color: '#aaa'
-}
-
-const labelStyle = {
-    fontSize: '0.8rem',
-    fontWeight: '500',
-    color: '#555',
-    marginBottom: '0.5rem',
-    display: 'block'
-}
-
-const delayGridStyle = {
-    display: 'flex',
-    gap: '0.5rem',
-    flexWrap: 'wrap'
-}
-
-const delayBtnStyle = {
-    padding: '0.5rem 1rem',
-    borderRadius: '8px',
-    fontSize: '0.875rem',
-    cursor: 'pointer',
-    fontFamily: 'inherit',
-    transition: 'all 0.15s'
-}
-
-const presetGridStyle = {
-    display: 'flex',
-    gap: '0.5rem',
-    flexWrap: 'wrap',
-    marginBottom: '0.5rem'
-}
-
-const presetBtnStyle = {
-    padding: '0.4rem 0.875rem',
-    borderRadius: '100px',
-    border: '1px solid #e5e5e5',
-    background: '#f9fafb',
-    color: '#555',
-    fontSize: '0.8rem',
-    cursor: 'pointer',
-    fontFamily: 'inherit'
-}
-
-const catRowStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '0.625rem 0.875rem',
-    background: '#f9fafb',
-    borderRadius: '8px',
-    marginBottom: '0.5rem'
-}
-
-const removeBtnStyle = {
-    background: 'transparent',
-    border: 'none',
-    color: '#aaa',
-    cursor: 'pointer',
-    fontSize: '0.8rem',
-    padding: '0'
-}
-
-const addBtnStyle = {
-    padding: '0.75rem 1.25rem',
-    borderRadius: '8px',
-    background: '#111',
-    color: '#fff',
-    border: 'none',
-    fontSize: '0.875rem',
-    cursor: 'pointer',
-    fontFamily: 'inherit',
-    whiteSpace: 'nowrap'
-}
-
-const saveBtnStyle = {
-    width: '100%',
-    padding: '0.875rem',
-    borderRadius: '8px',
-    background: '#111',
-    color: '#fff',
-    fontSize: '0.95rem',
-    fontWeight: '600',
-    border: 'none',
-    cursor: 'pointer',
-    marginTop: '0.5rem'
-}
-
-const errorStyle = {
-    background: '#fee2e2',
-    color: '#dc2626',
-    padding: '0.75rem',
-    borderRadius: '8px',
-    marginBottom: '1rem',
-    fontSize: '0.875rem'
-}
-
-const successStyle = {
-    background: '#f0fdf4',
-    color: '#16a34a',
-    padding: '0.75rem',
-    borderRadius: '8px',
-    marginBottom: '1rem',
-    fontSize: '0.875rem'
-}
+const centerStyle = { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }
+const layoutStyle = { display: 'flex', minHeight: '100vh', background: '#fafafa' }
+const mainStyle = { marginLeft: '220px', flex: 1, overflow: 'auto' }
+const pageStyle = { maxWidth: '680px', margin: '0 auto', padding: '2rem 1.5rem' }
+const pageTitleStyle = { fontSize: '1.4rem', fontWeight: '600', color: '#111', marginBottom: '0.25rem' }
+const pageSubStyle = { color: '#888', fontSize: '0.875rem', marginBottom: '1.5rem' }
+const cardStyle = { background: '#fff', border: '1px solid #e5e5e5', borderRadius: '12px', padding: '1.25rem', marginBottom: '1rem' }
+const cardTitleStyle = { fontSize: '0.95rem', fontWeight: '600', color: '#111', marginBottom: '0.25rem' }
+const cardSubStyle = { fontSize: '0.8rem', color: '#888', marginBottom: '1rem' }
+const inputStyle = { width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #e5e5e5', fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', marginBottom: '0.5rem' }
+const hintStyle = { fontSize: '0.75rem', color: '#aaa' }
+const labelStyle = { fontSize: '0.8rem', fontWeight: '500', color: '#555', marginBottom: '0.5rem', display: 'block' }
+const delayGridStyle = { display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }
+const delayBtnStyle = { padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.875rem', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }
+const presetGridStyle = { display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }
+const presetBtnStyle = { padding: '0.4rem 0.875rem', borderRadius: '100px', border: '1px solid #e5e5e5', background: '#f9fafb', color: '#555', fontSize: '0.8rem', cursor: 'pointer', fontFamily: 'inherit' }
+const catRowStyle = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.625rem 0.875rem', background: '#f9fafb', borderRadius: '8px', marginBottom: '0.5rem' }
+const removeBtnStyle = { background: 'transparent', border: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.8rem', padding: '0' }
+const addBtnStyle = { padding: '0.75rem 1.25rem', borderRadius: '8px', background: '#111', color: '#fff', border: 'none', fontSize: '0.875rem', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }
+const saveBtnStyle = { width: '100%', padding: '0.875rem', borderRadius: '8px', background: '#111', color: '#fff', fontSize: '0.95rem', fontWeight: '600', border: 'none', cursor: 'pointer', marginTop: '0.5rem' }
+const errorStyle = { background: '#fee2e2', color: '#dc2626', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.875rem' }
+const successStyle = { background: '#f0fdf4', color: '#16a34a', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.875rem' }

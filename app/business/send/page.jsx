@@ -30,9 +30,12 @@ export default function SendPage() {
             const reqData = await reqRes.json()
 
             if (bizData.business) setBusiness(bizData.business)
+
             if (settingsData.settings) {
-                setDelay(settingsData.settings.send_delay_minutes || 60)
+                const savedDelay = settingsData.settings.send_delay_minutes
+                setDelay(savedDelay !== null && savedDelay !== undefined ? savedDelay : 60)
             }
+
             if (reqData.requests) setRequests(reqData.requests)
 
         } catch (err) {
@@ -84,13 +87,15 @@ export default function SendPage() {
     }
 
     const delayLabel = (mins) => {
-        if (mins < 60) return `${mins} min`
+        if (mins === 0) return 'Instantly'
+        if (mins < 60) return `${mins} minutes`
         if (mins === 60) return '1 hour'
         if (mins < 1440) return `${mins / 60} hours`
         return '24 hours'
     }
 
     const scheduledTime = () => {
+        if (delay === 0) return 'now'
         const t = new Date(Date.now() + delay * 60 * 1000)
         return t.toLocaleTimeString('en-ZA', {
             hour: '2-digit',
@@ -112,7 +117,8 @@ export default function SendPage() {
 
                     <h1 style={pageTitleStyle}>Send request</h1>
                     <p style={pageSubStyle}>
-                        Customer receives a WhatsApp message after {delayLabel(delay)}
+                        Customer receives WhatsApp{' '}
+                        {delay === 0 ? 'instantly' : `after ${delayLabel(delay)}`}
                     </p>
 
                     <div style={gridStyle}>
@@ -122,9 +128,12 @@ export default function SendPage() {
                             <h2 style={cardTitleStyle}>New feedback request</h2>
 
                             {error && <div style={errorStyle}>{error}</div>}
+
                             {success && (
                                 <div style={successStyle}>
-                                    Queued ✓ — WhatsApp sends at {scheduledTime()}
+                                    {delay === 0
+                                        ? 'WhatsApp sent immediately ✓'
+                                        : `Queued ✓ — WhatsApp sends at ${scheduledTime()}`}
                                 </div>
                             )}
 
@@ -158,14 +167,14 @@ export default function SendPage() {
                                         WhatsApp preview
                                     </p>
                                     <div style={bubbleStyle}>
-                                        Hey {form.customerName || 'there'} 👋{'\n\n'}
-                                        Thanks for visiting <strong>{business?.name}</strong> today!{'\n\n'}
-                                        How was your experience? Takes 30 seconds:{'\n'}
-                                        👉 repuvault.co.za/feedback/{business?.slug}{'\n\n'}
-                                        We appreciate your support 🙏
+                                        {`Hey ${form.customerName || 'there'} 👋\n\nThanks for visiting `}
+                                        <strong>{business?.name}</strong>
+                                        {` today!\n\nHow was your experience? Takes 30 seconds:\n👉 ${process.env.NEXT_PUBLIC_APP_URL || 'repuvault.co.za'}/feedback/${business?.slug}\n\nWe appreciate your support 🙏`}
                                     </div>
                                     <p style={{ fontSize: '0.75rem', color: '#aaa', marginTop: '0.5rem' }}>
-                                        Sends in {delayLabel(delay)} · at {scheduledTime()}
+                                        {delay === 0
+                                            ? 'Sends immediately'
+                                            : `Sends in ${delayLabel(delay)} · at ${scheduledTime()}`}
                                     </p>
                                 </div>
 
@@ -174,9 +183,25 @@ export default function SendPage() {
                                     disabled={sending}
                                     style={btnStyle}
                                 >
-                                    {sending ? 'Queuing...' : `Send request`}
+                                    {sending ? 'Sending...' : 'Send request'}
                                 </button>
                             </form>
+
+                            {/* Delay info */}
+                            <div style={delayInfoStyle}>
+                                <p style={{ fontSize: '0.75rem', color: '#888', marginBottom: '0.3rem' }}>
+                                    Current delay setting
+                                </p>
+                                <p style={{ fontSize: '0.875rem', fontWeight: '500', color: '#111' }}>
+                                    {delayLabel(delay)}
+                                </p>
+                                <a
+                                    href="/business/settings"
+                                    style={{ fontSize: '0.75rem', color: '#16a34a', textDecoration: 'none' }}
+                                >
+                                    Change in settings →
+                                </a>
+                            </div>
 
                             {/* Feedback link */}
                             <div style={linkBoxStyle}>
@@ -184,7 +209,7 @@ export default function SendPage() {
                                     Or share your feedback link directly
                                 </p>
                                 <p style={{ fontSize: '0.85rem', fontWeight: '500', color: '#111' }}>
-                                    repuvault.co.za/feedback/{business?.slug}
+                                    {process.env.NEXT_PUBLIC_APP_URL}/feedback/{business?.slug}
                                 </p>
                             </div>
                         </div>
@@ -229,151 +254,24 @@ export default function SendPage() {
     )
 }
 
-const centerStyle = {
-    minHeight: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center'
-}
-
-const layoutStyle = {
-    display: 'flex',
-    minHeight: '100vh',
-    background: '#fafafa'
-}
-
-const mainStyle = {
-    marginLeft: '220px',
-    flex: 1,
-    overflow: 'auto'
-}
-
-const pageStyle = {
-    maxWidth: '900px',
-    margin: '0 auto',
-    padding: '2rem 1.5rem'
-}
-
-const pageTitleStyle = {
-    fontSize: '1.4rem',
-    fontWeight: '600',
-    color: '#111',
-    marginBottom: '0.25rem'
-}
-
-const pageSubStyle = {
-    color: '#888',
-    fontSize: '0.875rem',
-    marginBottom: '1.5rem'
-}
-
-const gridStyle = {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '1rem',
-    alignItems: 'start'
-}
-
-const cardStyle = {
-    background: '#fff',
-    border: '1px solid #e5e5e5',
-    borderRadius: '12px',
-    padding: '1.25rem'
-}
-
-const cardTitleStyle = {
-    fontSize: '0.95rem',
-    fontWeight: '600',
-    color: '#111',
-    marginBottom: '1rem'
-}
-
+const centerStyle = { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }
+const layoutStyle = { display: 'flex', minHeight: '100vh', background: '#fafafa' }
+const mainStyle = { marginLeft: '220px', flex: 1, overflow: 'auto' }
+const pageStyle = { maxWidth: '900px', margin: '0 auto', padding: '2rem 1.5rem' }
+const pageTitleStyle = { fontSize: '1.4rem', fontWeight: '600', color: '#111', marginBottom: '0.25rem' }
+const pageSubStyle = { color: '#888', fontSize: '0.875rem', marginBottom: '1.5rem' }
+const gridStyle = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', alignItems: 'start' }
+const cardStyle = { background: '#fff', border: '1px solid #e5e5e5', borderRadius: '12px', padding: '1.25rem' }
+const cardTitleStyle = { fontSize: '0.95rem', fontWeight: '600', color: '#111', marginBottom: '1rem' }
 const groupStyle = { marginBottom: '0.875rem' }
-
-const labelStyle = {
-    fontSize: '0.8rem',
-    color: '#555',
-    display: 'block',
-    marginBottom: '0.4rem',
-    fontWeight: '500'
-}
-
-const inputStyle = {
-    width: '100%',
-    padding: '0.75rem 1rem',
-    borderRadius: '8px',
-    border: '1px solid #e5e5e5',
-    fontSize: '0.9rem',
-    outline: 'none',
-    boxSizing: 'border-box',
-    fontFamily: 'inherit'
-}
-
-const previewStyle = {
-    background: '#f9fafb',
-    border: '1px solid #e5e5e5',
-    borderRadius: '10px',
-    padding: '1rem',
-    marginBottom: '1rem'
-}
-
-const bubbleStyle = {
-    background: '#1F2C34',
-    color: '#E9EDE5',
-    borderRadius: '12px 12px 12px 0',
-    padding: '0.875rem 1rem',
-    fontSize: '0.8rem',
-    lineHeight: '1.6',
-    whiteSpace: 'pre-wrap'
-}
-
-const btnStyle = {
-    width: '100%',
-    padding: '0.875rem',
-    borderRadius: '8px',
-    background: '#111',
-    color: '#fff',
-    fontSize: '0.9rem',
-    fontWeight: '600',
-    border: 'none',
-    cursor: 'pointer',
-    marginBottom: '1rem'
-}
-
-const linkBoxStyle = {
-    padding: '0.875rem',
-    background: '#f9fafb',
-    borderRadius: '8px',
-    border: '1px solid #e5e5e5'
-}
-
-const errorStyle = {
-    background: '#fee2e2',
-    color: '#dc2626',
-    padding: '0.75rem',
-    borderRadius: '8px',
-    marginBottom: '1rem',
-    fontSize: '0.875rem'
-}
-
-const successStyle = {
-    background: '#f0fdf4',
-    color: '#16a34a',
-    padding: '0.75rem',
-    borderRadius: '8px',
-    marginBottom: '1rem',
-    fontSize: '0.875rem'
-}
-
-const rowStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '0.625rem 0',
-    borderBottom: '1px solid #f3f4f6'
-}
-
-const emptyStyle = {
-    fontSize: '0.85rem',
-    color: '#aaa'
-}
+const labelStyle = { fontSize: '0.8rem', color: '#555', display: 'block', marginBottom: '0.4rem', fontWeight: '500' }
+const inputStyle = { width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #e5e5e5', fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }
+const previewStyle = { background: '#f9fafb', border: '1px solid #e5e5e5', borderRadius: '10px', padding: '1rem', marginBottom: '1rem' }
+const bubbleStyle = { background: '#1F2C34', color: '#E9EDE5', borderRadius: '12px 12px 12px 0', padding: '0.875rem 1rem', fontSize: '0.8rem', lineHeight: '1.6', whiteSpace: 'pre-wrap' }
+const btnStyle = { width: '100%', padding: '0.875rem', borderRadius: '8px', background: '#111', color: '#fff', fontSize: '0.9rem', fontWeight: '600', border: 'none', cursor: 'pointer', marginBottom: '1rem' }
+const delayInfoStyle = { padding: '0.875rem', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e5e5', marginBottom: '0.75rem' }
+const linkBoxStyle = { padding: '0.875rem', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e5e5' }
+const errorStyle = { background: '#fee2e2', color: '#dc2626', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.875rem' }
+const successStyle = { background: '#f0fdf4', color: '#16a34a', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.875rem' }
+const rowStyle = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.625rem 0', borderBottom: '1px solid #f3f4f6' }
+const emptyStyle = { fontSize: '0.85rem', color: '#aaa' }
