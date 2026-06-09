@@ -252,8 +252,8 @@ export default function SettingsPage() {
 
 const centerStyle = { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }
 const layoutStyle = { display: 'flex', minHeight: '100vh', background: '#fafafa' }
-const mainStyle = { flex: 1, overflow: 'auto' }
-const pageStyle = { maxWidth: '680px', margin: '0 auto', padding: '2rem 1.5rem' }
+const mainStyle = { width: '100%', minWidth: 0 }
+const pageStyle = { maxWidth: '680px', margin: '0 auto', padding: '2rem 1.5rem', boxSizing: 'border-box' }
 const pageTitleStyle = { fontSize: '1.4rem', fontWeight: '600', color: '#111', marginBottom: '0.25rem' }
 const pageSubStyle = { color: '#888', fontSize: '0.875rem', marginBottom: '1.5rem' }
 const cardStyle = { background: '#fff', border: '1px solid #e5e5e5', borderRadius: '12px', padding: '1.25rem', marginBottom: '1rem' }

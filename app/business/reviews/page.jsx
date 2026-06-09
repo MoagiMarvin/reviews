@@ -107,8 +107,8 @@ export default function ReviewsPage() {
     return (
         <BusinessLayout>
             <Sidebar business={business} />
-            <div style={{ flex: 1, overflow: 'auto' }} className="main-with-sidebar">
-                <div style={{ maxWidth: '900px', margin: '0 auto', padding: isMobile ? '1.25rem 1rem' : '2rem 1.5rem' }}>
+            <div style={{ width: '100%', minWidth: 0 }} className="main-with-sidebar">
+                <div style={{ maxWidth: '900px', margin: '0 auto', padding: isMobile ? '1.25rem 1rem' : '2rem 1.5rem', boxSizing: 'border-box' }}>
 
                     {/* Page header */}
                     <div style={{ marginBottom: '1.75rem' }}>
@@ -123,7 +123,7 @@ export default function ReviewsPage() {
                     {/* Stats row — always 2x2 on mobile, 5 across on desktop */}
                     <div style={{
                         display: 'grid',
-                        gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)',
+                        gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(5, 1fr)',
                         gap: '0.625rem',
                         marginBottom: '1.5rem'
                     }}>

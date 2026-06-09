@@ -140,8 +140,8 @@ export default function DashboardPage() {
     return (
         <BusinessLayout>
             <Sidebar business={business} />
-            <div style={{ flex: 1, overflow: 'auto' }}>
-                <div style={{ maxWidth: '900px', margin: '0 auto', padding: p }}>
+            <div style={{ width: '100%', minWidth: 0 }}>
+                <div style={{ maxWidth: '900px', margin: '0 auto', padding: p, boxSizing: 'border-box' }}>
 
                     {/* Header */}
                     <div style={{ marginBottom: '1.5rem' }}>

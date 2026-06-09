@@ -15,7 +15,10 @@ export default function BusinessLayout({ children }) {
         <div style={{
             marginLeft: isMobile ? '0' : '220px',
             minHeight: '100vh',
-            background: '#fafafa'
+            background: '#fafafa',
+            overflowX: 'hidden',
+            boxSizing: 'border-box',
+            width: isMobile ? '100%' : `calc(100vw - 220px)`
         }}>
             {children}
         </div>
