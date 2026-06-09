@@ -112,7 +112,7 @@ export default function SendPage() {
     return (
         <div style={layoutStyle}>
             <Sidebar business={business} />
-            <div style={mainStyle}>
+            <div style={mainStyle} className="main-with-sidebar">
                 <div style={pageStyle}>
 
                     <h1 style={pageTitleStyle}>Send request</h1>

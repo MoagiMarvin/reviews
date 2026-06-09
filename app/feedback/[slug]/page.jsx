@@ -38,19 +38,15 @@ export default function FeedbackPage() {
         const avg = Math.round(values.reduce((s, v) => s + v, 0) / values.length)
         setOverallRating(avg)
         if (Object.keys(updated).length === categories.length) {
-            const hasLowRating = Object.values(updated).some(v => v <= 2)
-            const isOverallGood = avg >= 4
-            if (hasLowRating && isOverallGood) {
-                setTimeout(() => setStep('mixed'), 400)
-            } else if (isOverallGood) {
-                setTimeout(() => setStep('happy'), 400)
-            } else {
-                setTimeout(() => setStep('sad'), 400)
-            }
+            const hasLow = Object.values(updated).some(v => v <= 2)
+            const isGood = avg >= 4
+            if (hasLow && isGood) setTimeout(() => setStep('mixed'), 400)
+            else if (isGood) setTimeout(() => setStep('happy'), 400)
+            else setTimeout(() => setStep('sad'), 400)
         }
     }
 
-    const allCategoriesRated = () => categories.every(cat => categoryRatings[cat])
+    const allRated = () => categories.every(cat => categoryRatings[cat])
 
     const submitFeedback = async (isPublic) => {
         setLoading(true)
@@ -71,9 +67,7 @@ export default function FeedbackPage() {
 
     const handleGoogle = async () => {
         await submitFeedback(true)
-        if (business.google_review_link) {
-            window.open(business.google_review_link, '_blank')
-        }
+        if (business.google_review_link) window.open(business.google_review_link, '_blank')
         setStep('done')
     }
 
@@ -129,14 +123,16 @@ export default function FeedbackPage() {
                                                 onMouseEnter={() => setHoveredCategory({ ...hoveredCategory, [cat]: s })}
                                                 onMouseLeave={() => setHoveredCategory({ ...hoveredCategory, [cat]: 0 })}
                                                 style={{
-                                                    fontSize: '1.8rem',
+                                                    fontSize: '1.9rem',
                                                     cursor: 'pointer',
                                                     userSelect: 'none',
                                                     transition: 'transform 0.1s',
                                                     transform: (hoveredCategory[cat] >= s || categoryRatings[cat] >= s)
                                                         ? 'scale(1.2)' : 'scale(1)',
-                                                    opacity: (hoveredCategory[cat] >= s || categoryRatings[cat] >= s)
-                                                        ? 1 : 0.25
+                                                    color: (hoveredCategory[cat] >= s || categoryRatings[cat] >= s)
+                                                        ? '#F5A623' : '#E0E0E0',
+                                                    textShadow: (hoveredCategory[cat] >= s || categoryRatings[cat] >= s)
+                                                        ? '0 1px 3px rgba(245,166,35,0.3)' : 'none'
                                                 }}
                                             >★</span>
                                         ))}
@@ -144,7 +140,7 @@ export default function FeedbackPage() {
                                 </div>
                             ))}
                         </div>
-                        {!allCategoriesRated() && (
+                        {!allRated() && (
                             <p style={{ fontSize: '0.8rem', color: '#aaa' }}>
                                 Rate each category to continue
                             </p>
@@ -152,7 +148,7 @@ export default function FeedbackPage() {
                     </>
                 )}
 
-                {/* STEP 2A — All good */}
+                {/* STEP 2A — Happy */}
                 {step === 'happy' && (
                     <>
                         <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🙌</div>
@@ -161,15 +157,14 @@ export default function FeedbackPage() {
                             {categories.map(cat => (
                                 <div key={cat} style={summaryRowStyle}>
                                     <span style={{ fontSize: '0.8rem', color: '#555' }}>{cat}</span>
-                                    <span style={{ color: '#f59e0b', fontSize: '0.8rem' }}>
+                                    <span style={{ color: '#F5A623', fontSize: '0.85rem' }}>
                                         {'★'.repeat(categoryRatings[cat] || 0)}
                                     </span>
                                 </div>
                             ))}
                         </div>
                         <p style={{ color: '#888', fontSize: '0.875rem', marginBottom: '1rem', lineHeight: 1.6 }}>
-                            What did you love most? Leave us a compliment —
-                            it means the world to our team 💛
+                            What did you love most? Leave us a compliment — it means the world to our team 💛
                         </p>
                         <input
                             type="text"
@@ -204,8 +199,8 @@ export default function FeedbackPage() {
                                 <div key={cat} style={summaryRowStyle}>
                                     <span style={{ fontSize: '0.8rem', color: '#555' }}>{cat}</span>
                                     <span style={{
-                                        color: categoryRatings[cat] <= 2 ? '#dc2626' : '#f59e0b',
-                                        fontSize: '0.8rem'
+                                        color: categoryRatings[cat] <= 2 ? '#dc2626' : '#F5A623',
+                                        fontSize: '0.85rem'
                                     }}>
                                         {'★'.repeat(categoryRatings[cat] || 0)}
                                     </span>
@@ -214,9 +209,7 @@ export default function FeedbackPage() {
                         </div>
                         <p style={{ color: '#888', fontSize: '0.875rem', marginBottom: '1rem', lineHeight: 1.6 }}>
                             Before you share on Google — tell us what we can improve on{' '}
-                            <strong style={{ color: '#111' }}>
-                                {lowCategories.join(' and ')}
-                            </strong>.
+                            <strong style={{ color: '#111' }}>{lowCategories.join(' and ')}</strong>.
                             This stays completely private.
                         </p>
                         <input
@@ -242,7 +235,7 @@ export default function FeedbackPage() {
                     </>
                 )}
 
-                {/* STEP 2C — All bad */}
+                {/* STEP 2C — Sad */}
                 {step === 'sad' && (
                     <>
                         <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>😔</div>
@@ -252,8 +245,8 @@ export default function FeedbackPage() {
                                 <div key={cat} style={summaryRowStyle}>
                                     <span style={{ fontSize: '0.8rem', color: '#555' }}>{cat}</span>
                                     <span style={{
-                                        color: categoryRatings[cat] <= 2 ? '#dc2626' : '#f59e0b',
-                                        fontSize: '0.8rem'
+                                        color: categoryRatings[cat] <= 2 ? '#dc2626' : '#F5A623',
+                                        fontSize: '0.85rem'
                                     }}>
                                         {'★'.repeat(categoryRatings[cat] || 0)}
                                     </span>
@@ -261,8 +254,7 @@ export default function FeedbackPage() {
                             ))}
                         </div>
                         <p style={{ color: '#888', fontSize: '0.875rem', marginBottom: '1.25rem', lineHeight: 1.6 }}>
-                            Tell us what went wrong — we will make it right.
-                            This stays completely private.
+                            Tell us what went wrong — we will make it right. This stays completely private.
                         </p>
                         <input
                             type="text"
@@ -309,13 +301,13 @@ export default function FeedbackPage() {
 
 const centerStyle = { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }
 const containerStyle = { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', background: '#fafafa' }
-const cardStyle = { background: '#fff', border: '1px solid #e5e5e5', borderRadius: '20px', padding: '2rem', maxWidth: '440px', width: '100%', textAlign: 'center' }
+const cardStyle = { background: '#fff', border: '1px solid #e5e5e5', borderRadius: '20px', padding: '2rem 1.5rem', maxWidth: '440px', width: '100%', textAlign: 'center' }
 const avatarStyle = { width: '56px', height: '56px', borderRadius: '14px', background: '#f0fdf4', border: '1px solid #bbf7d0', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem', fontSize: '1.1rem', fontWeight: '700', color: '#16a34a' }
 const titleStyle = { fontSize: '1.3rem', fontWeight: '600', marginBottom: '0.5rem', color: '#111' }
 const subStyle = { color: '#888', fontSize: '0.875rem', marginBottom: '1.5rem' }
 const catRowStyle = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.625rem 0', borderBottom: '1px solid #f3f4f6' }
 const catLabelStyle = { fontSize: '0.875rem', color: '#333', textAlign: 'left', flex: 1 }
-const starRowStyle = { display: 'flex', gap: '0.125rem' }
+const starRowStyle = { display: 'flex', gap: '2px' }
 const summaryStyle = { background: '#f9fafb', borderRadius: '10px', padding: '0.875rem', marginBottom: '1.25rem', width: '100%' }
 const summaryRowStyle = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.25rem 0' }
 const inputStyle = { width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #e5e5e5', fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', textAlign: 'left' }

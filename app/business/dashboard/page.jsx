@@ -161,7 +161,7 @@ export default function DashboardPage() {
     return (
         <div style={layoutStyle}>
             <Sidebar business={business} />
-            <div style={mainStyle}>
+            <div style={mainStyle} className="main-with-sidebar">
                 <div style={pageStyle}>
 
                     {/* Header with period selector */}
