@@ -76,7 +76,6 @@ export default function Sidebar({ business }) {
                     </div>
                 </div>
             )}
-
             <nav style={{ flex: 1 }}>
                 {links.map(link => {
                     const active = pathname === link.href
@@ -98,7 +97,6 @@ export default function Sidebar({ business }) {
                     )
                 })}
             </nav>
-
             <button onClick={handleLogout} style={logoutStyle}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                     <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
@@ -108,26 +106,32 @@ export default function Sidebar({ business }) {
         </>
     )
 
-    // MOBILE
     if (isMobile) {
         return (
             <>
-                {/* Mobile top bar */}
+                {/* Mobile top bar — hamburger on LEFT */}
                 <div style={mobileBarStyle}>
-                    <span style={{ fontWeight: '700', fontSize: '1rem', color: '#111' }}>
-                        Repu<span style={{ color: '#16a34a' }}>vault</span>
-                    </span>
-                    <button onClick={() => setOpen(!open)} style={hamStyle}>
-                        {open ? (
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M18 6L6 18M6 6l12 12" />
-                            </svg>
-                        ) : (
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M3 12h18M3 6h18M3 18h18" />
-                            </svg>
-                        )}
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <button onClick={() => setOpen(!open)} style={hamStyle}>
+                            {open ? (
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M18 6L6 18M6 6l12 12" />
+                                </svg>
+                            ) : (
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M3 12h18M3 6h18M3 18h18" />
+                                </svg>
+                            )}
+                        </button>
+                        <span style={{ fontWeight: '700', fontSize: '1rem', color: '#111' }}>
+                            Repu<span style={{ color: '#16a34a' }}>vault</span>
+                        </span>
+                    </div>
+                    {business && (
+                        <span style={{ fontSize: '0.75rem', color: '#888' }}>
+                            {business.name}
+                        </span>
+                    )}
                 </div>
 
                 {/* Drawer */}
@@ -136,15 +140,15 @@ export default function Sidebar({ business }) {
                         <div style={overlayStyle} onClick={() => setOpen(false)} />
                         <div style={drawerStyle}>
                             <div style={{ padding: '1.25rem 0.875rem', display: 'flex', flexDirection: 'column', height: '100%' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                                    <span style={{ fontWeight: '700', fontSize: '1.1rem', color: '#111' }}>
-                                        Repu<span style={{ color: '#16a34a' }}>vault</span>
-                                    </span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
                                     <button onClick={() => setOpen(false)} style={hamStyle}>
                                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                             <path d="M18 6L6 18M6 6l12 12" />
                                         </svg>
                                     </button>
+                                    <span style={{ fontWeight: '700', fontSize: '1.1rem', color: '#111' }}>
+                                        Repu<span style={{ color: '#16a34a' }}>vault</span>
+                                    </span>
                                 </div>
                                 <NavLinks />
                             </div>
@@ -155,7 +159,6 @@ export default function Sidebar({ business }) {
         )
     }
 
-    // DESKTOP
     return (
         <div style={desktopStyle}>
             <div style={{ padding: '1.25rem 0.875rem', display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -170,124 +173,14 @@ export default function Sidebar({ business }) {
     )
 }
 
-const desktopStyle = {
-    width: '220px',
-    minHeight: '100vh',
-    background: '#fff',
-    borderRight: '1px solid #e5e5e5',
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    bottom: 0,
-    zIndex: 20
-}
-
-const mobileBarStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    background: '#fff',
-    borderBottom: '1px solid #e5e5e5',
-    padding: '0.875rem 1.25rem',
-    position: 'sticky',
-    top: 0,
-    zIndex: 30
-}
-
-const hamStyle = {
-    background: 'transparent',
-    border: 'none',
-    cursor: 'pointer',
-    padding: '0.25rem',
-    display: 'flex',
-    alignItems: 'center',
-    color: '#111'
-}
-
-const overlayStyle = {
-    position: 'fixed',
-    inset: 0,
-    background: 'rgba(0,0,0,0.5)',
-    zIndex: 40
-}
-
-const drawerStyle = {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    bottom: 0,
-    width: '260px',
-    background: '#fff',
-    zIndex: 50,
-    boxShadow: '4px 0 24px rgba(0,0,0,0.15)',
-    overflowY: 'auto'
-}
-
-const bizStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.625rem',
-    padding: '0.75rem 0.5rem',
-    marginBottom: '1rem',
-    background: '#f9fafb',
-    borderRadius: '10px',
-    overflow: 'hidden'
-}
-
-const bizAvatarStyle = {
-    width: '32px',
-    height: '32px',
-    borderRadius: '8px',
-    background: '#dcfce7',
-    color: '#16a34a',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '0.75rem',
-    fontWeight: '700',
-    flexShrink: 0
-}
-
-const bizNameStyle = {
-    fontSize: '0.8rem',
-    fontWeight: '600',
-    color: '#111',
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis'
-}
-
-const bizSlugStyle = {
-    fontSize: '0.7rem',
-    color: '#aaa',
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis'
-}
-
-const navLinkStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.625rem',
-    padding: '0.625rem 0.75rem',
-    borderRadius: '8px',
-    textDecoration: 'none',
-    fontSize: '0.875rem',
-    marginBottom: '0.25rem',
-    transition: 'all 0.15s'
-}
-
-const logoutStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.625rem',
-    padding: '0.625rem 0.75rem',
-    borderRadius: '8px',
-    background: 'transparent',
-    border: 'none',
-    color: '#888',
-    fontSize: '0.875rem',
-    cursor: 'pointer',
-    width: '100%',
-    marginTop: 'auto'
-}
+const desktopStyle = { width: '220px', minHeight: '100vh', background: '#fff', borderRight: '1px solid #e5e5e5', position: 'fixed', top: 0, left: 0, bottom: 0, zIndex: 20 }
+const mobileBarStyle = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fff', borderBottom: '1px solid #e5e5e5', padding: '0.875rem 1.25rem', position: 'sticky', top: 0, zIndex: 30 }
+const hamStyle = { background: 'transparent', border: 'none', cursor: 'pointer', padding: '0.25rem', display: 'flex', alignItems: 'center', color: '#111' }
+const overlayStyle = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 40 }
+const drawerStyle = { position: 'fixed', top: 0, left: 0, bottom: 0, width: '260px', background: '#fff', zIndex: 50, boxShadow: '4px 0 24px rgba(0,0,0,0.15)', overflowY: 'auto' }
+const bizStyle = { display: 'flex', alignItems: 'center', gap: '0.625rem', padding: '0.75rem 0.5rem', marginBottom: '1rem', background: '#f9fafb', borderRadius: '10px', overflow: 'hidden' }
+const bizAvatarStyle = { width: '32px', height: '32px', borderRadius: '8px', background: '#dcfce7', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: '700', flexShrink: 0 }
+const bizNameStyle = { fontSize: '0.8rem', fontWeight: '600', color: '#111', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }
+const bizSlugStyle = { fontSize: '0.7rem', color: '#aaa', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }
+const navLinkStyle = { display: 'flex', alignItems: 'center', gap: '0.625rem', padding: '0.625rem 0.75rem', borderRadius: '8px', textDecoration: 'none', fontSize: '0.875rem', marginBottom: '0.25rem', transition: 'all 0.15s' }
+const logoutStyle = { display: 'flex', alignItems: 'center', gap: '0.625rem', padding: '0.625rem 0.75rem', borderRadius: '8px', background: 'transparent', border: 'none', color: '#888', fontSize: '0.875rem', cursor: 'pointer', width: '100%', marginTop: 'auto' }
