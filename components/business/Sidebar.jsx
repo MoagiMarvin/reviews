@@ -1,19 +1,11 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 
 export default function Sidebar({ business }) {
     const pathname = usePathname()
     const router = useRouter()
     const [open, setOpen] = useState(false)
-    const [isMobile, setIsMobile] = useState(false)
-
-    useEffect(() => {
-        const check = () => setIsMobile(window.innerWidth < 768)
-        check()
-        window.addEventListener('resize', check)
-        return () => window.removeEventListener('resize', check)
-    }, [])
 
     async function handleLogout() {
         await fetch('/api/business/logout', { method: 'POST' })
@@ -106,70 +98,76 @@ export default function Sidebar({ business }) {
         </>
     )
 
-    if (isMobile) {
-        return (
-            <>
-                {/* Mobile top bar — hamburger on LEFT */}
-                <div style={mobileBarStyle}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <button onClick={() => setOpen(!open)} style={hamStyle}>
-                            {open ? (
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <path d="M18 6L6 18M6 6l12 12" />
-                                </svg>
-                            ) : (
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <path d="M3 12h18M3 6h18M3 18h18" />
-                                </svg>
-                            )}
-                        </button>
-                        <span style={{ fontWeight: '700', fontSize: '1rem', color: '#111' }}>
+    return (
+        <>
+            <style>{`
+                .sidebar-desktop { display: flex; }
+                .sidebar-mobile-bar { display: none; }
+                @media (max-width: 767px) {
+                    .sidebar-desktop { display: none; }
+                    .sidebar-mobile-bar { display: flex; }
+                }
+            `}</style>
+
+            {/* Desktop sidebar — hidden on mobile via CSS */}
+            <div className="sidebar-desktop" style={desktopStyle}>
+                <div style={{ padding: '1.25rem 0.875rem', display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
+                    <div style={{ padding: '0 0.5rem', marginBottom: '1.5rem' }}>
+                        <span style={{ color: '#111', fontWeight: '700', fontSize: '1.1rem' }}>
                             Repu<span style={{ color: '#16a34a' }}>vault</span>
                         </span>
                     </div>
-                    {business && (
-                        <span style={{ fontSize: '0.75rem', color: '#888' }}>
-                            {business.name}
-                        </span>
-                    )}
+                    <NavLinks />
                 </div>
+            </div>
 
-                {/* Drawer */}
-                {open && (
-                    <>
-                        <div style={overlayStyle} onClick={() => setOpen(false)} />
-                        <div style={drawerStyle}>
-                            <div style={{ padding: '1.25rem 0.875rem', display: 'flex', flexDirection: 'column', height: '100%' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                                    <button onClick={() => setOpen(false)} style={hamStyle}>
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <path d="M18 6L6 18M6 6l12 12" />
-                                        </svg>
-                                    </button>
-                                    <span style={{ fontWeight: '700', fontSize: '1.1rem', color: '#111' }}>
-                                        Repu<span style={{ color: '#16a34a' }}>vault</span>
-                                    </span>
-                                </div>
-                                <NavLinks />
-                            </div>
-                        </div>
-                    </>
-                )}
-            </>
-        )
-    }
-
-    return (
-        <div style={desktopStyle}>
-            <div style={{ padding: '1.25rem 0.875rem', display: 'flex', flexDirection: 'column', height: '100%' }}>
-                <div style={{ padding: '0 0.5rem', marginBottom: '1.5rem' }}>
-                    <span style={{ color: '#111', fontWeight: '700', fontSize: '1.1rem' }}>
+            {/* Mobile top bar — hidden on desktop via CSS */}
+            <div className="sidebar-mobile-bar" style={mobileBarStyle}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <button onClick={() => setOpen(!open)} style={hamStyle}>
+                        {open ? (
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M18 6L6 18M6 6l12 12" />
+                            </svg>
+                        ) : (
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M3 12h18M3 6h18M3 18h18" />
+                            </svg>
+                        )}
+                    </button>
+                    <span style={{ fontWeight: '700', fontSize: '1rem', color: '#111' }}>
                         Repu<span style={{ color: '#16a34a' }}>vault</span>
                     </span>
                 </div>
-                <NavLinks />
+                {business && (
+                    <span style={{ fontSize: '0.75rem', color: '#888' }}>
+                        {business.name}
+                    </span>
+                )}
             </div>
-        </div>
+
+            {/* Drawer (mobile) */}
+            {open && (
+                <>
+                    <div style={overlayStyle} onClick={() => setOpen(false)} />
+                    <div style={drawerStyle}>
+                        <div style={{ padding: '1.25rem 0.875rem', display: 'flex', flexDirection: 'column', height: '100%' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                                <button onClick={() => setOpen(false)} style={hamStyle}>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M18 6L6 18M6 6l12 12" />
+                                    </svg>
+                                </button>
+                                <span style={{ fontWeight: '700', fontSize: '1.1rem', color: '#111' }}>
+                                    Repu<span style={{ color: '#16a34a' }}>vault</span>
+                                </span>
+                            </div>
+                            <NavLinks />
+                        </div>
+                    </div>
+                </>
+            )}
+        </>
     )
 }
 

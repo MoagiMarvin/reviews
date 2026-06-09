@@ -1,26 +1,33 @@
 'use client'
-import { useEffect, useState } from 'react'
 
 export default function BusinessLayout({ children }) {
-    const [isMobile, setIsMobile] = useState(false)
-
-    useEffect(() => {
-        const check = () => setIsMobile(window.innerWidth < 768)
-        check()
-        window.addEventListener('resize', check)
-        return () => window.removeEventListener('resize', check)
-    }, [])
-
     return (
-        <div style={{
-            marginLeft: isMobile ? '0' : '220px',
-            minHeight: '100vh',
-            background: '#fafafa',
-            overflowX: 'hidden',
-            boxSizing: 'border-box',
-            width: isMobile ? '100%' : `calc(100vw - 220px)`
-        }}>
-            {children}
-        </div>
+        <>
+            <style>{`
+                .business-layout {
+                    min-height: 100vh;
+                    background: #fafafa;
+                    overflow-x: hidden;
+                    box-sizing: border-box;
+                    margin-left: 220px;
+                    width: calc(100vw - 220px);
+                }
+                @media (max-width: 767px) {
+                    .business-layout {
+                        margin-left: 0;
+                        width: 100%;
+                    }
+                }
+                .business-page-inner {
+                    box-sizing: border-box;
+                    width: 100%;
+                }
+            `}</style>
+            <div className="business-layout">
+                <div className="business-page-inner">
+                    {children}
+                </div>
+            </div>
+        </>
     )
 }

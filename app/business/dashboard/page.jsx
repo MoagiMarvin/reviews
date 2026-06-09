@@ -19,14 +19,6 @@ export default function DashboardPage() {
     const [loading, setLoading] = useState(true)
     const [period, setPeriod] = useState(30)
     const [visibleReviews, setVisibleReviews] = useState(5)
-    const [isMobile, setIsMobile] = useState(false)
-
-    useEffect(() => {
-        const check = () => setIsMobile(window.innerWidth < 768)
-        check()
-        window.addEventListener('resize', check)
-        return () => window.removeEventListener('resize', check)
-    }, [])
 
     useEffect(() => { loadDashboard() }, [])
 
@@ -135,18 +127,38 @@ export default function DashboardPage() {
         </div>
     )
 
-    const p = isMobile ? '1.25rem 1rem' : '2rem 1.5rem'
-
     return (
         <BusinessLayout>
+            <style>{`
+                .dash-page { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; box-sizing: border-box; }
+                .dash-title { font-size: 1.4rem; }
+                .dash-period-btn { padding: 0.4rem 0.875rem; font-size: 0.8rem; }
+                .dash-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.625rem; margin-bottom: 1.25rem; }
+                .dash-stat-card { background: #fff; border: 1px solid #ebebeb; border-radius: 10px; padding: 1rem; min-width: 0; box-sizing: border-box; }
+                .dash-stat-num { font-size: 2rem; }
+                .dash-cat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.625rem; }
+                .dash-bottom { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
+                .dash-card { background: #fff; border: 1px solid #ebebeb; border-radius: 12px; padding: 1.25rem; min-width: 0; box-sizing: border-box; overflow: hidden; }
+                .dash-review-row { padding: 0.75rem 0; border-bottom: 1px solid #f5f5f5; min-width: 0; overflow: hidden; }
+                .dash-review-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; gap: 0.5rem; }
+                .dash-review-name { font-size: 0.85rem; font-weight: 500; color: #111; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+                .dash-review-stars { color: #f59e0b; font-size: 0.8rem; flex-shrink: 0; }
+                @media (max-width: 767px) {
+                    .dash-page { padding: 1.25rem 1rem; }
+                    .dash-title { font-size: 1.25rem; }
+                    .dash-period-btn { padding: 0.35rem 0.7rem; font-size: 0.78rem; }
+                    .dash-stat-num { font-size: 1.75rem; }
+                    .dash-cat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+                    .dash-bottom { grid-template-columns: minmax(0, 1fr); }
+                }
+            `}</style>
             <Sidebar business={business} />
             <div style={{ width: '100%', minWidth: 0 }}>
-                <div style={{ maxWidth: '900px', margin: '0 auto', padding: p, boxSizing: 'border-box' }}>
+                <div className="dash-page">
 
                     {/* Header */}
                     <div style={{ marginBottom: '1.5rem' }}>
-                        <h1 style={{
-                            fontSize: isMobile ? '1.25rem' : '1.4rem',
+                        <h1 className="dash-title" style={{
                             fontWeight: '700',
                             color: '#111',
                             letterSpacing: '-0.02em',
@@ -164,10 +176,9 @@ export default function DashboardPage() {
                                 <button
                                     key={p.value}
                                     onClick={() => { setPeriod(p.value); setVisibleReviews(5) }}
+                                    className="dash-period-btn"
                                     style={{
-                                        padding: isMobile ? '0.35rem 0.7rem' : '0.4rem 0.875rem',
                                         borderRadius: '100px',
-                                        fontSize: isMobile ? '0.78rem' : '0.8rem',
                                         cursor: 'pointer',
                                         fontFamily: 'inherit',
                                         transition: 'all 0.15s',
@@ -182,17 +193,12 @@ export default function DashboardPage() {
                         </div>
                     </div>
 
-                    {/* Stats — 2x2 grid always */}
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(2, 1fr)',
-                        gap: '0.625rem',
-                        marginBottom: '1.25rem'
-                    }}>
-                        <div style={{ background: '#fff', border: '1px solid #ebebeb', borderRadius: '10px', padding: isMobile ? '0.875rem' : '1rem' }}>
+                    {/* Stats — 2x2 grid */}
+                    <div className="dash-stats">
+                        <div className="dash-stat-card">
                             <div style={{ fontSize: '0.7rem', color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.35rem' }}>Reviews</div>
                             <div style={{ display: 'flex', alignItems: 'baseline' }}>
-                                <span style={{ fontSize: isMobile ? '1.75rem' : '2rem', fontWeight: '700', color: '#16a34a', letterSpacing: '-0.03em' }}>
+                                <span className="dash-stat-num" style={{ fontWeight: '700', color: '#16a34a', letterSpacing: '-0.03em' }}>
                                     {periodReviews.length}
                                 </span>
                                 <TrendBadge pct={reviewTrend} />
@@ -202,10 +208,10 @@ export default function DashboardPage() {
                             </div>
                         </div>
 
-                        <div style={{ background: '#fff', border: '1px solid #ebebeb', borderRadius: '10px', padding: isMobile ? '0.875rem' : '1rem' }}>
+                        <div className="dash-stat-card">
                             <div style={{ fontSize: '0.7rem', color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.35rem' }}>Avg rating</div>
                             <div style={{ display: 'flex', alignItems: 'baseline' }}>
-                                <span style={{ fontSize: isMobile ? '1.75rem' : '2rem', fontWeight: '700', color: '#d97706', letterSpacing: '-0.03em' }}>
+                                <span className="dash-stat-num" style={{ fontWeight: '700', color: '#d97706', letterSpacing: '-0.03em' }}>
                                     {currentAvg ?? '—'}
                                 </span>
                                 {currentAvg && <span style={{ fontSize: '0.8rem', color: '#d97706', marginLeft: '2px' }}>★</span>}
@@ -214,9 +220,9 @@ export default function DashboardPage() {
                             <div style={{ fontSize: '0.7rem', color: '#bbb', marginTop: '0.2rem' }}>out of 5.0</div>
                         </div>
 
-                        <div style={{ background: '#fff', border: '1px solid #ebebeb', borderRadius: '10px', padding: isMobile ? '0.875rem' : '1rem' }}>
+                        <div className="dash-stat-card">
                             <div style={{ fontSize: '0.7rem', color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.35rem' }}>Requests</div>
-                            <div style={{ fontSize: isMobile ? '1.75rem' : '2rem', fontWeight: '700', color: '#111', letterSpacing: '-0.03em' }}>
+                            <div className="dash-stat-num" style={{ fontWeight: '700', color: '#111', letterSpacing: '-0.03em' }}>
                                 {periodRequests.length}
                             </div>
                             <div style={{ fontSize: '0.7rem', color: '#bbb', marginTop: '0.2rem' }}>
@@ -224,9 +230,9 @@ export default function DashboardPage() {
                             </div>
                         </div>
 
-                        <div style={{ background: '#fff', border: '1px solid #ebebeb', borderRadius: '10px', padding: isMobile ? '0.875rem' : '1rem' }}>
+                        <div className="dash-stat-card">
                             <div style={{ fontSize: '0.7rem', color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.35rem' }}>Response</div>
-                            <div style={{ fontSize: isMobile ? '1.75rem' : '2rem', fontWeight: '700', color: '#111', letterSpacing: '-0.03em' }}>
+                            <div className="dash-stat-num" style={{ fontWeight: '700', color: '#111', letterSpacing: '-0.03em' }}>
                                 {responseRate}%
                             </div>
                             <div style={{ fontSize: '0.7rem', color: '#bbb', marginTop: '0.2rem' }}>response rate</div>
@@ -235,27 +241,25 @@ export default function DashboardPage() {
 
                     {/* Category health */}
                     {categoryAnalytics.length > 0 && (
-                        <div style={{ background: '#fff', border: '1px solid #ebebeb', borderRadius: '12px', padding: '1.25rem', marginBottom: '1.25rem' }}>
+                        <div style={{ background: '#fff', border: '1px solid #ebebeb', borderRadius: '12px', padding: '1.25rem', marginBottom: '1.25rem', boxSizing: 'border-box', overflow: 'hidden' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
                                 <h2 style={{ fontSize: '0.9rem', fontWeight: '600', color: '#111' }}>Category health</h2>
                                 <a href="/business/reviews" style={{ fontSize: '0.78rem', color: '#aaa', textDecoration: 'none' }}>Full breakdown →</a>
                             </div>
                             <p style={{ fontSize: '0.78rem', color: '#aaa', marginBottom: '1rem' }}>Average per category</p>
-                            <div style={{
-                                display: 'grid',
-                                gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fit, minmax(150px, 1fr))',
-                                gap: '0.625rem'
-                            }}>
+                            <div className="dash-cat-grid">
                                 {categoryAnalytics.map(({ category, avg, count }) => (
                                     <div key={category} style={{
                                         background: '#f9fafb',
                                         borderRadius: '8px',
                                         padding: '0.75rem',
-                                        border: '1px solid #f3f4f6'
+                                        border: '1px solid #f3f4f6',
+                                        minWidth: 0,
+                                        boxSizing: 'border-box'
                                     }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                                            <span style={{ fontSize: '0.78rem', color: '#333', fontWeight: '500' }}>{category}</span>
-                                            <span style={{ fontSize: '0.85rem', fontWeight: '700', color: getColor(avg) }}>{avg}</span>
+                                            <span style={{ fontSize: '0.78rem', color: '#333', fontWeight: '500', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{category}</span>
+                                            <span style={{ fontSize: '0.85rem', fontWeight: '700', color: getColor(avg), flexShrink: 0, marginLeft: '0.25rem' }}>{avg}</span>
                                         </div>
                                         <div style={{ height: '5px', background: '#e5e5e5', borderRadius: '3px', overflow: 'hidden' }}>
                                             <div style={{
@@ -274,16 +278,11 @@ export default function DashboardPage() {
                         </div>
                     )}
 
-                    {/* Bottom section — stacks on mobile */}
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-                        gap: '1rem',
-                        alignItems: 'start'
-                    }}>
+                    {/* Bottom section — 2 cols desktop, stacks mobile */}
+                    <div className="dash-bottom">
 
                         {/* Recent reviews */}
-                        <div style={{ background: '#fff', border: '1px solid #ebebeb', borderRadius: '12px', padding: '1.25rem' }}>
+                        <div className="dash-card">
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                                 <h2 style={{ fontSize: '0.9rem', fontWeight: '600', color: '#111' }}>
                                     Recent reviews{' '}
@@ -291,7 +290,7 @@ export default function DashboardPage() {
                                         {periodReviews.length}
                                     </span>
                                 </h2>
-                                <a href="/business/reviews" style={{ fontSize: '0.78rem', color: '#aaa', textDecoration: 'none' }}>View all →</a>
+                                <a href="/business/reviews" style={{ fontSize: '0.78rem', color: '#aaa', textDecoration: 'none', flexShrink: 0 }}>View all →</a>
                             </div>
 
                             {periodReviews.length === 0 ? (
@@ -306,12 +305,12 @@ export default function DashboardPage() {
                             ) : (
                                 <>
                                     {periodReviews.slice(0, visibleReviews).map(r => (
-                                        <div key={r.id} style={{ padding: '0.75rem 0', borderBottom: '1px solid #f5f5f5' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3px' }}>
-                                                <span style={{ fontSize: '0.85rem', fontWeight: '500', color: '#111' }}>
+                                        <div key={r.id} className="dash-review-row">
+                                            <div className="dash-review-header">
+                                                <span className="dash-review-name">
                                                     {r.customer_name || 'Anonymous'}
                                                 </span>
-                                                <span style={{ color: '#f59e0b', fontSize: '0.8rem' }}>
+                                                <span className="dash-review-stars">
                                                     {'★'.repeat(r.rating)}
                                                     <span style={{ color: '#e5e5e5' }}>{'★'.repeat(5 - r.rating)}</span>
                                                 </span>
@@ -376,13 +375,13 @@ export default function DashboardPage() {
                         </div>
 
                         {/* Right column */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', minWidth: 0 }}>
 
                             {/* Recent requests */}
-                            <div style={{ background: '#fff', border: '1px solid #ebebeb', borderRadius: '12px', padding: '1.25rem' }}>
+                            <div className="dash-card">
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                                     <h2 style={{ fontSize: '0.9rem', fontWeight: '600', color: '#111' }}>Recent requests</h2>
-                                    <a href="/business/send" style={{ fontSize: '0.78rem', color: '#aaa', textDecoration: 'none' }}>Send new →</a>
+                                    <a href="/business/send" style={{ fontSize: '0.78rem', color: '#aaa', textDecoration: 'none', flexShrink: 0 }}>Send new →</a>
                                 </div>
                                 {periodRequests.length === 0 ? (
                                     <p style={{ fontSize: '0.825rem', color: '#ccc' }}>No requests this period</p>
@@ -410,7 +409,7 @@ export default function DashboardPage() {
                             </div>
 
                             {/* Quick actions */}
-                            <div style={{ background: '#fff', border: '1px solid #ebebeb', borderRadius: '12px', padding: '1.25rem' }}>
+                            <div className="dash-card">
                                 <h2 style={{ fontSize: '0.9rem', fontWeight: '600', color: '#111', marginBottom: '0.875rem' }}>Quick actions</h2>
                                 {[
                                     { href: '/business/send', label: 'Send feedback request' },
