@@ -442,7 +442,7 @@ export default function DashboardPage() {
 
 const centerStyle = { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }
 const layoutStyle = { display: 'flex', minHeight: '100vh', background: '#fafafa' }
-const mainStyle = { marginLeft: '220px', flex: 1, overflow: 'auto' }
+const mainStyle = { flex: 1, overflow: 'auto' }
 const pageStyle = { maxWidth: '900px', margin: '0 auto', padding: '2rem 1.5rem' }
 const pageHeaderStyle = { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }
 const pageTitleStyle = { fontSize: '1.4rem', fontWeight: '600', color: '#111', marginBottom: '0.25rem' }

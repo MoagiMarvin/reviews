@@ -252,7 +252,7 @@ export default function SettingsPage() {
 
 const centerStyle = { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }
 const layoutStyle = { display: 'flex', minHeight: '100vh', background: '#fafafa' }
-const mainStyle = { marginLeft: '220px', flex: 1, overflow: 'auto' }
+const mainStyle = { flex: 1, overflow: 'auto' }
 const pageStyle = { maxWidth: '680px', margin: '0 auto', padding: '2rem 1.5rem' }
 const pageTitleStyle = { fontSize: '1.4rem', fontWeight: '600', color: '#111', marginBottom: '0.25rem' }
 const pageSubStyle = { color: '#888', fontSize: '0.875rem', marginBottom: '1.5rem' }
