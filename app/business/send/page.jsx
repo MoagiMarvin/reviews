@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Sidebar from '@/components/business/Sidebar'
+import BusinessLayout from '@/components/business/BusinessLayout'
 
 export default function SendPage() {
     const [business, setBusiness] = useState(null)
@@ -110,7 +111,7 @@ export default function SendPage() {
     )
 
     return (
-        <div style={layoutStyle}>
+        <BusinessLayout>
             <Sidebar business={business} />
             <div style={mainStyle} className="main-with-sidebar">
                 <div style={pageStyle}>
@@ -250,7 +251,7 @@ export default function SendPage() {
                     </div>
                 </div>
             </div>
-        </div>
+        </BusinessLayout>
     )
 }
 

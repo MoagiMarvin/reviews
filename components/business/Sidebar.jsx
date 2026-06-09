@@ -1,11 +1,19 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 
 export default function Sidebar({ business }) {
     const pathname = usePathname()
     const router = useRouter()
     const [open, setOpen] = useState(false)
+    const [isMobile, setIsMobile] = useState(false)
+
+    useEffect(() => {
+        const check = () => setIsMobile(window.innerWidth < 768)
+        check()
+        window.addEventListener('resize', check)
+        return () => window.removeEventListener('resize', check)
+    }, [])
 
     async function handleLogout() {
         await fetch('/api/business/logout', { method: 'POST' })
@@ -55,14 +63,8 @@ export default function Sidebar({ business }) {
         }
     ]
 
-    const NavContent = () => (
-        <div style={innerStyle}>
-            <div style={logoStyle}>
-                <span style={{ color: '#111', fontWeight: '700', fontSize: '1.1rem' }}>
-                    Repu<span style={{ color: '#16a34a' }}>vault</span>
-                </span>
-            </div>
-
+    const NavLinks = () => (
+        <>
             {business && (
                 <div style={bizStyle}>
                     <div style={bizAvatarStyle}>
@@ -103,57 +105,68 @@ export default function Sidebar({ business }) {
                 </svg>
                 Log out
             </button>
-        </div>
+        </>
     )
 
-    return (
-        <>
-            {/* Desktop sidebar */}
-            <div className="desktop-sidebar" style={desktopStyle}>
-                <NavContent />
-            </div>
-
-            {/* Mobile top bar */}
-            <div className="mobile-topbar" style={mobileBarStyle}>
-                <span style={{ fontWeight: '700', fontSize: '1rem' }}>
-                    Repu<span style={{ color: '#16a34a' }}>vault</span>
-                </span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    {business && (
-                        <span style={{ fontSize: '0.8rem', color: '#888' }}>
-                            {business.name}
-                        </span>
-                    )}
-                    <button
-                        onClick={() => setOpen(!open)}
-                        style={hamStyle}
-                    >
+    // MOBILE
+    if (isMobile) {
+        return (
+            <>
+                {/* Mobile top bar */}
+                <div style={mobileBarStyle}>
+                    <span style={{ fontWeight: '700', fontSize: '1rem', color: '#111' }}>
+                        Repu<span style={{ color: '#16a34a' }}>vault</span>
+                    </span>
+                    <button onClick={() => setOpen(!open)} style={hamStyle}>
                         {open ? (
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path d="M18 6L6 18M6 6l12 12" />
                             </svg>
                         ) : (
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path d="M3 12h18M3 6h18M3 18h18" />
                             </svg>
                         )}
                     </button>
                 </div>
-            </div>
 
-            {/* Mobile drawer */}
-            {open && (
-                <>
-                    <div
-                        style={overlayStyle}
-                        onClick={() => setOpen(false)}
-                    />
-                    <div style={drawerStyle}>
-                        <NavContent />
-                    </div>
-                </>
-            )}
-        </>
+                {/* Drawer */}
+                {open && (
+                    <>
+                        <div style={overlayStyle} onClick={() => setOpen(false)} />
+                        <div style={drawerStyle}>
+                            <div style={{ padding: '1.25rem 0.875rem', display: 'flex', flexDirection: 'column', height: '100%' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                                    <span style={{ fontWeight: '700', fontSize: '1.1rem', color: '#111' }}>
+                                        Repu<span style={{ color: '#16a34a' }}>vault</span>
+                                    </span>
+                                    <button onClick={() => setOpen(false)} style={hamStyle}>
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <path d="M18 6L6 18M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <NavLinks />
+                            </div>
+                        </div>
+                    </>
+                )}
+            </>
+        )
+    }
+
+    // DESKTOP
+    return (
+        <div style={desktopStyle}>
+            <div style={{ padding: '1.25rem 0.875rem', display: 'flex', flexDirection: 'column', height: '100%' }}>
+                <div style={{ padding: '0 0.5rem', marginBottom: '1.5rem' }}>
+                    <span style={{ color: '#111', fontWeight: '700', fontSize: '1.1rem' }}>
+                        Repu<span style={{ color: '#16a34a' }}>vault</span>
+                    </span>
+                </div>
+                <NavLinks />
+            </div>
+        </div>
     )
 }
 
@@ -170,14 +183,15 @@ const desktopStyle = {
 }
 
 const mobileBarStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     background: '#fff',
     borderBottom: '1px solid #e5e5e5',
     padding: '0.875rem 1.25rem',
     position: 'sticky',
     top: 0,
-    zIndex: 30,
-    alignItems: 'center',
-    justifyContent: 'space-between'
+    zIndex: 30
 }
 
 const hamStyle = {
@@ -205,20 +219,8 @@ const drawerStyle = {
     width: '260px',
     background: '#fff',
     zIndex: 50,
-    boxShadow: '4px 0 24px rgba(0,0,0,0.12)',
+    boxShadow: '4px 0 24px rgba(0,0,0,0.15)',
     overflowY: 'auto'
-}
-
-const innerStyle = {
-    display: 'flex',
-    flexDirection: 'column',
-    height: '100%',
-    padding: '1.25rem 0.875rem'
-}
-
-const logoStyle = {
-    padding: '0 0.5rem',
-    marginBottom: '1.5rem'
 }
 
 const bizStyle = {

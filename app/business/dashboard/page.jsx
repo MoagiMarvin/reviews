@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/business/Sidebar'
+import BusinessLayout from '@/components/business/BusinessLayout'
 
 const PERIODS = [
     { label: 'This week', value: 7 },
@@ -159,7 +160,7 @@ export default function DashboardPage() {
     )
 
     return (
-        <div style={layoutStyle}>
+        <BusinessLayout>
             <Sidebar business={business} />
             <div style={mainStyle} className="main-with-sidebar">
                 <div style={pageStyle}>
@@ -435,7 +436,7 @@ export default function DashboardPage() {
                     </div>
                 </div>
             </div>
-        </div>
+        </BusinessLayout>
     )
 }
 

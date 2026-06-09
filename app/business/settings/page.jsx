@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Sidebar from '@/components/business/Sidebar'
+import BusinessLayout from '@/components/business/BusinessLayout'
 
 const PRESETS = {
     Restaurant: ['Food quality', 'Service', 'Atmosphere', 'Value for money'],
@@ -120,7 +121,7 @@ export default function SettingsPage() {
     )
 
     return (
-        <div style={layoutStyle}>
+        <BusinessLayout>
             <Sidebar business={business} />
             <div style={mainStyle} className="main-with-sidebar">
                 <div style={pageStyle}>
@@ -245,7 +246,7 @@ export default function SettingsPage() {
 
                 </div>
             </div>
-        </div>
+        </BusinessLayout>
     )
 }
 
