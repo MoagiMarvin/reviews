@@ -11,15 +11,7 @@ export default function SendPage() {
     const [error, setError] = useState('')
     const [delay, setDelay] = useState(60)
     const [requests, setRequests] = useState([])
-    const [isMobile, setIsMobile] = useState(false)
     const [form, setForm] = useState({ customerNumber: '', customerName: '' })
-
-    useEffect(() => {
-        const check = () => setIsMobile(window.innerWidth < 768)
-        check()
-        window.addEventListener('resize', check)
-        return () => window.removeEventListener('resize', check)
-    }, [])
 
     useEffect(() => { loadData() }, [])
 
@@ -40,7 +32,7 @@ export default function SendPage() {
             }
             if (reqData.requests) setRequests(reqData.requests)
         } catch (err) {
-            setError('Failed to load')
+            setError('Failed to load initial data')
         } finally {
             setLoading(false)
         }
@@ -85,88 +77,286 @@ export default function SendPage() {
         return t.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })
     }
 
-    const statusColors = { pending: '#f59e0b', sent: '#3b82f6', reviewed: '#10b981' }
+    const statusColors = { pending: '#d97706', sent: '#3b82f6', reviewed: '#16a34a' }
 
-    if (loading) return <div style={centerStyle}><p style={{ color: '#888' }}>Loading...</p></div>
+    if (loading) return (
+        <div style={centerStyle}>
+            <p style={{ color: '#64748b', fontSize: '0.875rem' }}>Loading page data...</p>
+        </div>
+    )
 
     return (
         <BusinessLayout>
+            <style>{`
+                .send-page { max-width: 1200px; margin: 0; padding: 2rem 3rem 4rem 3rem; box-sizing: border-box; }
+                .send-title { font-size: 1.5rem; font-weight: 700; color: var(--text-main); letter-spacing: -0.03em; margin-bottom: 0.2rem; }
+                .send-sub { color: var(--text-muted); font-size: 0.875rem; margin-bottom: 2rem; }
+                .send-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
+                .send-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem; box-sizing: border-box; box-shadow: var(--shadow-sm); }
+                .send-card:hover { box-shadow: var(--shadow-md); }
+                .send-card-title { fontSize: 1rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.25rem; }
+                .send-card-sub { fontSize: 0.8rem; color: var(--text-muted); margin-bottom: 1.25rem; }
+                
+                .send-input {
+                    width: 100%;
+                    padding: 0.75rem 1rem;
+                    border-radius: var(--radius-md);
+                    border: 1px solid var(--border-hover);
+                    font-size: 0.9rem;
+                    outline: none;
+                    box-sizing: border-box;
+                    font-family: inherit;
+                    color: var(--text-main);
+                    transition: all 0.15s ease;
+                }
+                .send-input:focus {
+                    border-color: var(--primary);
+                    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
+                }
+
+                .send-btn {
+                    width: 100%;
+                    padding: 0.875rem;
+                    border-radius: var(--radius-md);
+                    background: var(--text-main);
+                    color: #fff;
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                    border: none;
+                    cursor: pointer;
+                    margin-bottom: 1.25rem;
+                    transition: background 0.15s ease;
+                }
+                .send-btn:hover {
+                    background: #1e293b;
+                }
+                .send-btn:disabled {
+                    background: var(--text-light);
+                    cursor: not-allowed;
+                }
+
+                /* High Fidelity WhatsApp Mockup */
+                .wa-mockup {
+                    border-radius: var(--radius-md);
+                    overflow: hidden;
+                    box-shadow: var(--shadow-sm);
+                    border: 1px solid var(--border-hover);
+                    margin-bottom: 1.25rem;
+                }
+                .wa-header {
+                    background: #075e54;
+                    color: #fff;
+                    padding: 0.625rem 0.875rem;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                }
+                .wa-avatar {
+                    width: 28px;
+                    height: 28px;
+                    border-radius: 50%;
+                    background: #128c7e;
+                    color: #fff;
+                    font-size: 0.7rem;
+                    font-weight: 700;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .wa-chat-body {
+                    background: #efeae2;
+                    background-image: radial-gradient(rgba(0,0,0,0.04) 1px, transparent 0);
+                    background-size: 16px 16px;
+                    padding: 1rem;
+                    min-height: 160px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: flex-end;
+                }
+                .wa-bubble {
+                    align-self: flex-start;
+                    background: #ffffff;
+                    color: #111111;
+                    padding: 0.625rem 0.875rem;
+                    border-radius: 0 8px 8px 8px;
+                    max-width: 85%;
+                    font-size: 0.8rem;
+                    line-height: 1.5;
+                    box-shadow: 0 1px 1.5px rgba(0,0,0,0.12);
+                    white-space: pre-wrap;
+                    position: relative;
+                }
+                .wa-time-check {
+                    display: flex;
+                    align-items: center;
+                    justify-content: flex-end;
+                    gap: 2px;
+                    font-size: 0.6rem;
+                    color: #888;
+                    margin-top: 0.25rem;
+                }
+
+                .delay-badge {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.35rem;
+                    padding: 0.5rem 0.75rem;
+                    background: #f8fafc;
+                    border: 1px solid var(--border-color);
+                    border-radius: var(--radius-md);
+                    font-size: 0.78rem;
+                    color: var(--text-muted);
+                }
+
+                .status-msg {
+                    padding: 0.875rem 1rem;
+                    border-radius: var(--radius-md);
+                    margin-bottom: 1.25rem;
+                    font-size: 0.875rem;
+                    font-weight: 500;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    animation: slideDown 0.15s ease-out;
+                }
+                @keyframes slideDown {
+                    from { transform: translateY(-8px); opacity: 0; }
+                    to { transform: translateY(0); opacity: 1; }
+                }
+
+                @media (max-width: 767px) {
+                    .send-grid { grid-template-columns: 1fr; gap: 1rem; }
+                    .send-page { padding: 1.25rem 1rem; }
+                }
+            `}</style>
             <Sidebar business={business} />
-            <div style={mainStyle}>
-                <div style={pageStyle}>
-                    <h1 style={pageTitleStyle}>Send request</h1>
-                    <p style={pageSubStyle}>
-                        Customer receives WhatsApp {delay === 0 ? 'instantly' : `after ${delayLabel(delay)}`}
+            <div style={mainStyle} className="main-with-sidebar">
+                <div className="send-page">
+                    <h1 className="send-title">Send Request</h1>
+                    <p className="send-sub">
+                        Send a customer a rating request {delay === 0 ? 'instantly' : `scheduled for ${delayLabel(delay)} delay`}
                     </p>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1rem', alignItems: 'start' }}>
+                    <div className="send-grid">
 
                         {/* Form */}
-                        <div style={cardStyle}>
-                            <h2 style={cardTitleStyle}>New feedback request</h2>
-                            {error && <div style={errorStyle}>{error}</div>}
-                            {success && (
-                                <div style={successStyle}>
-                                    {delay === 0 ? 'WhatsApp sent immediately ✓' : `Queued ✓ — sends at ${scheduledTime()}`}
+                        <div className="send-card">
+                            <h2 className="send-card-title">New feedback request</h2>
+                            <p className="send-card-sub">Queue a feedback request to a customer's WhatsApp line</p>
+                            
+                            {error && (
+                                <div className="status-msg" style={{ background: '#fee2e2', color: '#dc2626', border: '1px solid #fecaca' }}>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <circle cx="12" cy="12" r="10" />
+                                        <line x1="12" y1="8" x2="12" y2="12" />
+                                        <line x1="12" y1="16" x2="12.01" y2="16" />
+                                    </svg>
+                                    {error}
                                 </div>
                             )}
+                            {success && (
+                                <div className="status-msg" style={{ background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }}>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <polyline points="20 6 9 17 4 12" />
+                                    </svg>
+                                    {delay === 0 ? 'WhatsApp request dispatched ✓' : `Queued successfully ✓ — sends at ${scheduledTime()}`}
+                                </div>
+                            )}
+
                             <form onSubmit={handleSend}>
-                                <div style={{ marginBottom: '0.875rem' }}>
-                                    <label style={labelStyle}>WhatsApp number</label>
-                                    <input type="tel" placeholder="082 000 0000" value={form.customerNumber}
-                                        onChange={e => setForm({ ...form, customerNumber: e.target.value })}
-                                        required style={inputStyle} />
-                                </div>
                                 <div style={{ marginBottom: '1rem' }}>
+                                    <label style={labelStyle}>WhatsApp mobile number</label>
+                                    <input
+                                        type="tel"
+                                        placeholder="e.g. 082 000 0000"
+                                        value={form.customerNumber}
+                                        onChange={e => setForm({ ...form, customerNumber: e.target.value })}
+                                        required
+                                        className="send-input"
+                                    />
+                                </div>
+                                <div style={{ marginBottom: '1.25rem' }}>
                                     <label style={labelStyle}>Customer name (optional)</label>
-                                    <input type="text" placeholder="e.g. Sipho" value={form.customerName}
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. Sipho"
+                                        value={form.customerName}
                                         onChange={e => setForm({ ...form, customerName: e.target.value })}
-                                        style={inputStyle} />
+                                        className="send-input"
+                                    />
                                 </div>
-                                <div style={previewStyle}>
-                                    <p style={{ fontSize: '0.75rem', color: '#888', marginBottom: '0.75rem' }}>WhatsApp preview</p>
-                                    <div style={bubbleStyle}>
-                                        {`Hey ${form.customerName || 'there'} 👋\n\nThanks for visiting `}
-                                        <strong>{business?.name}</strong>
-                                        {`!\n\nHow was your experience?\n👉 .../feedback/${business?.slug}\n\nWe appreciate your support 🙏`}
+
+                                {/* Mockup */}
+                                <div style={{ marginBottom: '1.25rem' }}>
+                                    <label style={{ ...labelStyle, marginBottom: '0.5rem' }}>WhatsApp preview mockup</label>
+                                    <div className="wa-mockup">
+                                        <div className="wa-header">
+                                            <div className="wa-avatar">
+                                                {business?.name ? business.name.slice(0, 1).toUpperCase() : 'R'}
+                                            </div>
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ fontSize: '0.78rem', fontWeight: '600', lineHeight: 1.1 }}>{business?.name || 'Repuvault Business'}</div>
+                                                <div style={{ fontSize: '0.58rem', opacity: 0.8 }}>online</div>
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '0.5rem', opacity: 0.85 }}>
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                                            </div>
+                                        </div>
+                                        <div className="wa-chat-body">
+                                            <div className="wa-bubble">
+                                                {`Hey ${form.customerName || 'there'} 👋\n\nThanks for visiting `}
+                                                <strong>{business?.name || 'our shop'}</strong>
+                                                {`!\n\nHow was your experience?\n👉 ${typeof window !== 'undefined' ? window.location.origin : '...'}/feedback/${business?.slug || 'slug'}\n\nWe appreciate your support 🙏`}
+                                                <div className="wa-time-check">
+                                                    <span>{new Date().toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })}</span>
+                                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <p style={{ fontSize: '0.75rem', color: '#aaa', marginTop: '0.5rem' }}>
-                                        {delay === 0 ? 'Sends immediately' : `Sends in ${delayLabel(delay)}`}
-                                    </p>
                                 </div>
-                                <button type="submit" disabled={sending} style={btnStyle}>
-                                    {sending ? 'Sending...' : 'Send request'}
+
+                                <button type="submit" disabled={sending || !form.customerNumber} className="send-btn">
+                                    {sending ? 'Sending...' : 'Send WhatsApp Request'}
                                 </button>
                             </form>
-                            <div style={delayInfoStyle}>
-                                <p style={{ fontSize: '0.75rem', color: '#888', marginBottom: '0.3rem' }}>Current delay</p>
-                                <p style={{ fontSize: '0.875rem', fontWeight: '500', color: '#111' }}>{delayLabel(delay)}</p>
-                                <a href="/business/settings" style={{ fontSize: '0.75rem', color: '#16a34a', textDecoration: 'none' }}>Change in settings →</a>
+
+                            <div className="delay-badge">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <polyline points="12 6 12 12 16 14" />
+                                </svg>
+                                <span>Configured delay: <strong>{delayLabel(delay)}</strong></span>
+                                <a href="/business/settings" style={{ marginLeft: 'auto', color: 'var(--primary)', fontWeight: '600', textDecoration: 'none' }}>Change</a>
                             </div>
                         </div>
 
-                        {/* Recent requests */}
-                        <div style={cardStyle}>
-                            <h2 style={cardTitleStyle}>Recent requests</h2>
-                            <p style={{ fontSize: '0.8rem', color: '#888', marginBottom: '1rem' }}>{requests.length} total</p>
+                        {/* Recent requests list */}
+                        <div className="send-card">
+                            <h2 className="send-card-title">Recent requests</h2>
+                            <p className="send-card-sub">{requests.length} request logs captured in database</p>
+                            
                             {requests.length === 0 ? (
-                                <p style={{ fontSize: '0.85rem', color: '#aaa' }}>No requests yet</p>
+                                <p style={{ fontSize: '0.85rem', color: 'var(--text-light)', padding: '1rem 0', textAlign: 'center' }}>No requests dispatched yet</p>
                             ) : (
-                                requests.slice(0, 15).map(r => (
-                                    <div key={r.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.625rem 0', borderBottom: '1px solid #f3f4f6' }}>
-                                        <div style={{ flex: 1, minWidth: 0 }}>
-                                            <div style={{ fontSize: '0.875rem', fontWeight: '500', color: '#111', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                {r.customer_name || 'Unknown'}
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                    {requests.slice(0, 10).map(r => (
+                                        <div key={r.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 0', borderBottom: '1px solid var(--border-color)' }}>
+                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                <div style={{ fontSize: '0.875rem', fontWeight: '600', color: varStyle.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                    {r.customer_name || 'Unknown customer'}
+                                                </div>
+                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                                    {r.customer_number} · {new Date(r.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                </div>
                                             </div>
-                                            <div style={{ fontSize: '0.75rem', color: '#aaa', marginTop: '2px' }}>
-                                                {r.customer_number} · {new Date(r.created_at).toLocaleDateString('en-ZA')}
-                                            </div>
+                                            <span style={{ fontSize: '0.75rem', fontWeight: '600', color: statusColors[r.status], textTransform: 'capitalize', marginLeft: '0.5rem', flexShrink: 0 }}>
+                                                {r.status}
+                                            </span>
                                         </div>
-                                        <span style={{ fontSize: '0.75rem', fontWeight: '600', color: statusColors[r.status], textTransform: 'capitalize', marginLeft: '0.5rem', flexShrink: 0 }}>
-                                            {r.status}
-                                        </span>
-                                    </div>
-                                ))
+                                    ))}
+                                </div>
                             )}
                         </div>
 
@@ -177,18 +367,7 @@ export default function SendPage() {
     )
 }
 
-const centerStyle = { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }
-const mainStyle = { flex: 1, overflow: 'auto' }
-const pageStyle = { maxWidth: '900px', margin: '0 auto', padding: '1.5rem 1rem' }
-const pageTitleStyle = { fontSize: '1.4rem', fontWeight: '600', color: '#111', marginBottom: '0.25rem' }
-const pageSubStyle = { color: '#888', fontSize: '0.875rem', marginBottom: '1.5rem' }
-const cardStyle = { background: '#fff', border: '1px solid #e5e5e5', borderRadius: '12px', padding: '1.25rem' }
-const cardTitleStyle = { fontSize: '0.95rem', fontWeight: '600', color: '#111', marginBottom: '1rem' }
-const labelStyle = { fontSize: '0.8rem', color: '#555', display: 'block', marginBottom: '0.4rem', fontWeight: '500' }
-const inputStyle = { width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #e5e5e5', fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }
-const previewStyle = { background: '#f9fafb', border: '1px solid #e5e5e5', borderRadius: '10px', padding: '1rem', marginBottom: '1rem' }
-const bubbleStyle = { background: '#1F2C34', color: '#E9EDE5', borderRadius: '12px 12px 12px 0', padding: '0.875rem 1rem', fontSize: '0.8rem', lineHeight: '1.6', whiteSpace: 'pre-wrap' }
-const btnStyle = { width: '100%', padding: '0.875rem', borderRadius: '8px', background: '#111', color: '#fff', fontSize: '0.9rem', fontWeight: '600', border: 'none', cursor: 'pointer', marginBottom: '1rem' }
-const delayInfoStyle = { padding: '0.875rem', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e5e5' }
-const errorStyle = { background: '#fee2e2', color: '#dc2626', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.875rem' }
-const successStyle = { background: '#f0fdf4', color: '#16a34a', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.875rem' }
+const centerStyle = { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }
+const mainStyle = { width: '100%', minWidth: 0 }
+const labelStyle = { fontSize: '0.78rem', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '0.4rem', display: 'block', textTransform: 'uppercase', letterSpacing: '0.03em' }
+const varStyle = { text: 'var(--text-main)' }

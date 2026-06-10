@@ -91,66 +91,70 @@ export default function ReviewsPage() {
     }))
 
     if (loading) return (
-        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <p style={{ color: '#888', fontSize: '0.875rem' }}>Loading...</p>
+        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
+            <p style={{ color: '#64748b', fontSize: '0.875rem' }}>Loading reviews...</p>
         </div>
     )
 
     return (
         <BusinessLayout>
             <style>{`
-                .rev-page { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; box-sizing: border-box; }
-                .rev-title { font-size: 1.4rem; }
-                .rev-stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.625rem; margin-bottom: 1.5rem; }
-                .rev-stat-card { background: #fff; border: 1px solid #ebebeb; border-radius: 10px; padding: 1rem 1.125rem; min-width: 0; box-sizing: border-box; }
-                .rev-stat-num { font-size: 1.75rem; }
-                .rev-cat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 0.625rem; }
-                .rev-main { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 1rem; align-items: start; }
-                .rev-list-card { background: #fff; border: 1px solid #ebebeb; border-radius: 12px; padding: 1.25rem; min-width: 0; box-sizing: border-box; overflow: hidden; }
-                .rev-sidebar-card { background: #fff; border: 1px solid #ebebeb; border-radius: 12px; padding: 1.25rem; min-width: 0; box-sizing: border-box; }
-                .rev-card { padding: 0.875rem; border-radius: 9px; margin-bottom: 0.5rem; border: 1px solid #f3f4f6; background: #fff; cursor: pointer; transition: all 0.15s; min-width: 0; box-sizing: border-box; overflow: hidden; }
+                .rev-page { max-width: 1200px; margin: 0; padding: 2rem 3rem 4rem 3rem; box-sizing: border-box; }
+                .rev-title { font-size: 1.5rem; font-weight: 700; color: var(--text-main); letter-spacing: -0.03em; margin-bottom: 0.2rem; }
+                .rev-stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem; }
+                .rev-stat-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem 1.125rem; min-width: 0; box-sizing: border-box; box-shadow: var(--shadow-sm); }
+                .rev-stat-num { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.03em; }
+                .rev-cat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; }
+                .rev-main { display: grid; grid-template-columns: 1.3fr 0.7fr; gap: 1.5rem; align-items: start; }
+                .rev-list-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem; min-width: 0; box-sizing: border-box; overflow: hidden; box-shadow: var(--shadow-sm); }
+                .rev-sidebar-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem; min-width: 0; box-sizing: border-box; box-shadow: var(--shadow-sm); }
+                .rev-card { padding: 1rem; border-radius: var(--radius-md); margin-bottom: 0.625rem; border: 1px solid var(--border-color); background: #ffffff; cursor: pointer; transition: all 0.2s ease; min-width: 0; box-sizing: border-box; overflow: hidden; }
+                .rev-card:hover { border-color: var(--border-hover); box-shadow: var(--shadow-sm); }
                 .rev-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
-                .rev-card-left { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
-                .rev-card-name { font-size: 0.85rem; font-weight: 600; color: #111; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+                .rev-card-left { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
+                .rev-card-name { font-size: 0.875rem; font-weight: 600; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
                 .rev-card-right { text-align: right; flex-shrink: 0; }
+                .rev-filter-btn { padding: 0.35rem 0.875rem; font-size: 0.8rem; font-weight: 500; border-radius: 100px; cursor: pointer; transition: all 0.15s ease; }
+                
+                @media (max-width: 900px) {
+                    .rev-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+                }
                 @media (max-width: 767px) {
                     .rev-page { padding: 1.25rem 1rem; }
                     .rev-title { font-size: 1.25rem; }
-                    .rev-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-                    .rev-stat-card { padding: 0.875rem; }
+                    .rev-stats { gap: 0.5rem; }
+                    .rev-stat-card { padding: 0.75rem; }
                     .rev-stat-num { font-size: 1.5rem; }
                     .rev-cat-grid { grid-template-columns: minmax(0, 1fr); }
-                    .rev-main { grid-template-columns: minmax(0, 1fr); }
+                    .rev-main { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
                 }
             `}</style>
             <Sidebar business={business} />
-            <div style={{ width: '100%', minWidth: 0 }}>
+            <div style={{ width: '100%', minWidth: 0 }} className="main-with-sidebar">
                 <div className="rev-page">
 
                     {/* Page header */}
-                    <div style={{ marginBottom: '1.75rem' }}>
-                        <h1 className="rev-title" style={{ fontWeight: '700', color: '#111', marginBottom: '0.2rem', letterSpacing: '-0.02em' }}>
-                            Reviews
-                        </h1>
-                        <p style={{ color: '#999', fontSize: '0.85rem' }}>
-                            All feedback from your customers
+                    <div style={{ marginBottom: '2rem' }}>
+                        <h1 className="rev-title">Reviews</h1>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: 0 }}>
+                            Manage and respond to customer reviews and ratings
                         </p>
                     </div>
 
                     {/* Stats row */}
                     <div className="rev-stats">
                         {[
-                            { label: 'Total', value: reviews.length, color: '#111' },
-                            { label: 'Avg rating', value: avgRating ? `${avgRating}★` : '—', color: '#d97706' },
-                            { label: 'Positive', value: reviews.filter(r => r.rating >= 4).length, color: '#16a34a' },
+                            { label: 'Total', value: reviews.length, color: 'var(--text-main)' },
+                            { label: 'Avg Rating', value: avgRating ? `${avgRating}★` : '—', color: '#d97706' },
+                            { label: 'Positive', value: reviews.filter(r => r.rating >= 4).length, color: 'var(--primary)' },
                             { label: 'Negative', value: reviews.filter(r => r.rating < 4).length, color: '#dc2626' },
-                            { label: 'On Google', value: reviews.filter(r => r.is_public).length, color: '#3b82f6' },
+                            { label: 'On Google', value: reviews.filter(r => r.is_public).length, color: '#2563eb' },
                         ].map(s => (
                             <div key={s.label} className="rev-stat-card">
-                                <div style={{ fontSize: '0.7rem', color: '#aaa', marginBottom: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                <div style={{ fontSize: '0.68rem', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                                     {s.label}
                                 </div>
-                                <div className="rev-stat-num" style={{ fontWeight: '700', color: s.color, letterSpacing: '-0.02em' }}>
+                                <div className="rev-stat-num" style={{ color: s.color }}>
                                     {s.value}
                                 </div>
                             </div>
@@ -160,40 +164,41 @@ export default function ReviewsPage() {
                     {/* Category breakdown */}
                     {categoryAnalytics.length > 0 && (
                         <div style={{
-                            background: '#fff',
-                            border: '1px solid #ebebeb',
-                            borderRadius: '12px',
-                            padding: '1.25rem',
-                            marginBottom: '1.25rem',
+                            background: '#ffffff',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: 'var(--radius-lg)',
+                            padding: '1.5rem',
+                            marginBottom: '1.5rem',
                             boxSizing: 'border-box',
-                            overflow: 'hidden'
+                            overflow: 'hidden',
+                            boxShadow: 'var(--shadow-sm)'
                         }}>
-                            <h2 style={{ fontSize: '0.9rem', fontWeight: '600', color: '#111', marginBottom: '0.25rem' }}>
-                                What customers are saying
+                            <h2 style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--text-main)', margin: 0 }}>
+                                Customer parameters scores
                             </h2>
-                            <p style={{ fontSize: '0.78rem', color: '#aaa', marginBottom: '1.125rem' }}>
-                                Average score per category
+                            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0.15rem 0 1.25rem 0' }}>
+                                Average values compiled by rating category items
                             </p>
                             <div className="rev-cat-grid">
                                 {categoryAnalytics.map(({ category, avg, count }) => (
                                     <div key={category} style={{
                                         background: getStatusBg(avg),
                                         border: `1px solid ${getStatusColor(avg)}1a`,
-                                        borderRadius: '9px',
-                                        padding: '0.875rem',
+                                        borderRadius: 'var(--radius-md)',
+                                        padding: '1rem',
                                         minWidth: 0,
                                         boxSizing: 'border-box'
                                     }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.625rem' }}>
-                                            <span style={{ fontSize: '0.825rem', fontWeight: '500', color: '#222', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                                            <span style={{ fontSize: '0.825rem', fontWeight: '600', color: 'var(--text-main)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                                 {category}
                                             </span>
                                             <span style={{
-                                                fontSize: '0.7rem',
-                                                fontWeight: '600',
+                                                fontSize: '0.68rem',
+                                                fontWeight: '700',
                                                 color: getStatusColor(avg),
-                                                background: '#fff',
-                                                padding: '0.15rem 0.45rem',
+                                                background: '#ffffff',
+                                                padding: '0.15rem 0.5rem',
                                                 borderRadius: '100px',
                                                 border: `1px solid ${getStatusColor(avg)}2a`,
                                                 flexShrink: 0,
@@ -202,8 +207,8 @@ export default function ReviewsPage() {
                                                 {getStatusLabel(avg)}
                                             </span>
                                         </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-                                            <div style={{ flex: 1, height: '6px', background: '#e5e5e5', borderRadius: '3px', overflow: 'hidden', minWidth: 0 }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                            <div style={{ flex: 1, height: '6px', background: '#e2e8f0', borderRadius: '3px', overflow: 'hidden', minWidth: 0 }}>
                                                 <div style={{
                                                     height: '6px',
                                                     borderRadius: '3px',
@@ -212,11 +217,11 @@ export default function ReviewsPage() {
                                                     transition: 'width 0.4s ease'
                                                 }} />
                                             </div>
-                                            <span style={{ fontSize: '0.95rem', fontWeight: '700', color: getStatusColor(avg), minWidth: '30px', flexShrink: 0 }}>
+                                            <span style={{ fontSize: '1rem', fontWeight: '800', color: getStatusColor(avg), minWidth: '32px', flexShrink: 0, textAlign: 'right' }}>
                                                 {avg}
                                             </span>
                                         </div>
-                                        <div style={{ fontSize: '0.68rem', color: '#aaa', marginTop: '0.35rem' }}>
+                                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>
                                             {count} review{count !== 1 ? 's' : ''}
                                         </div>
                                     </div>
@@ -232,27 +237,22 @@ export default function ReviewsPage() {
                         <div className="rev-list-card">
 
                             {/* Filter tabs */}
-                            <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+                            <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
                                 {[
-                                    { key: 'all', label: 'All' },
+                                    { key: 'all', label: 'All Reviews' },
                                     { key: 'positive', label: 'Positive' },
                                     { key: 'negative', label: 'Negative' },
                                     { key: 'google', label: 'On Google' },
-                                    { key: 'private', label: 'Private' }
+                                    { key: 'private', label: 'Private Only' }
                                 ].map(tab => (
                                     <button
                                         key={tab.key}
                                         onClick={() => setFilter(tab.key)}
+                                        className="rev-filter-btn"
                                         style={{
-                                            padding: '0.3rem 0.7rem',
-                                            borderRadius: '100px',
-                                            fontSize: '0.8rem',
-                                            cursor: 'pointer',
-                                            fontFamily: 'inherit',
-                                            transition: 'all 0.15s',
-                                            background: filter === tab.key ? '#111' : 'transparent',
-                                            color: filter === tab.key ? '#fff' : '#888',
-                                            border: filter === tab.key ? '1px solid #111' : '1px solid #e5e5e5'
+                                            background: filter === tab.key ? 'var(--text-main)' : '#ffffff',
+                                            color: filter === tab.key ? '#ffffff' : 'var(--text-muted)',
+                                            border: filter === tab.key ? '1px solid var(--text-main)' : '1px solid var(--border-hover)'
                                         }}
                                     >
                                         {tab.label}
@@ -261,15 +261,16 @@ export default function ReviewsPage() {
                             </div>
 
                             {filtered.length === 0 ? (
-                                <p style={{ fontSize: '0.875rem', color: '#ccc', padding: '1rem 0' }}>No reviews found</p>
+                                <p style={{ fontSize: '0.875rem', color: 'var(--text-light)', padding: '2rem 0', textAlign: 'center' }}>No customer reviews match this filter criteria</p>
                             ) : (
                                 filtered.map(r => (
                                     <div
                                         key={r.id}
                                         className="rev-card"
                                         style={{
-                                            borderColor: selected?.id === r.id ? '#e5e5e5' : '#f3f4f6',
-                                            background: selected?.id === r.id ? '#fafafa' : '#fff',
+                                            borderColor: selected?.id === r.id ? 'var(--text-light)' : 'var(--border-color)',
+                                            background: selected?.id === r.id ? 'var(--bg-app)' : '#ffffff',
+                                            boxShadow: selected?.id === r.id ? 'var(--shadow-sm)' : 'none'
                                         }}
                                         onClick={() => setSelected(selected?.id === r.id ? null : r)}
                                     >
@@ -277,18 +278,18 @@ export default function ReviewsPage() {
                                         <div className="rev-card-header">
                                             <div className="rev-card-left">
                                                 <div style={{
-                                                    width: '30px', height: '30px', borderRadius: '50%',
-                                                    background: '#f0fdf4', border: '1px solid #dcfce7',
+                                                    width: '32px', height: '32px', borderRadius: '50%',
+                                                    background: 'var(--primary-light)', border: '1px solid var(--primary-border)',
                                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                    fontSize: '0.75rem', fontWeight: '700', color: '#16a34a', flexShrink: 0
+                                                    fontSize: '0.78rem', fontWeight: '800', color: 'var(--primary)', flexShrink: 0
                                                 }}>
                                                     {(r.customer_name || 'A').slice(0, 1).toUpperCase()}
                                                 </div>
                                                 <div style={{ minWidth: 0 }}>
                                                     <div className="rev-card-name">
-                                                        {r.customer_name || 'Anonymous'}
+                                                        {r.customer_name || 'Anonymous customer'}
                                                     </div>
-                                                    <div style={{ fontSize: '0.68rem', color: '#bbb', marginTop: '1px' }}>
+                                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-light)', marginTop: '2px' }}>
                                                         {new Date(r.created_at).toLocaleDateString('en-ZA', {
                                                             day: 'numeric', month: 'short', year: 'numeric'
                                                         })}
@@ -298,12 +299,12 @@ export default function ReviewsPage() {
                                             <div className="rev-card-right">
                                                 <div style={{ color: '#f59e0b', fontSize: '0.85rem', lineHeight: 1 }}>
                                                     {'★'.repeat(r.rating)}
-                                                    <span style={{ color: '#e5e5e5' }}>{'★'.repeat(5 - r.rating)}</span>
+                                                    <span style={{ color: '#e2e8f0' }}>{'★'.repeat(5 - r.rating)}</span>
                                                 </div>
-                                                <div style={{ fontSize: '0.68rem', marginTop: '3px' }}>
+                                                <div style={{ fontSize: '0.68rem', marginTop: '4px', fontWeight: '500' }}>
                                                     {r.is_public
-                                                        ? <span style={{ color: '#16a34a' }}>On Google ✓</span>
-                                                        : <span style={{ color: '#ccc' }}>Private</span>}
+                                                        ? <span style={{ color: 'var(--primary)' }}>Google ✓</span>
+                                                        : <span style={{ color: 'var(--text-light)' }}>Private</span>}
                                                 </div>
                                             </div>
                                         </div>
@@ -311,31 +312,32 @@ export default function ReviewsPage() {
                                         {/* Collapsed preview */}
                                         {r.feedback && selected?.id !== r.id && (
                                             <p style={{
-                                                fontSize: '0.78rem', color: '#888', marginTop: '0.5rem',
-                                                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+                                                fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.75rem',
+                                                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                                                fontStyle: 'italic', margin: '0.75rem 0 0 0'
                                             }}>
-                                                {r.feedback}
+                                                "{r.feedback}"
                                             </p>
                                         )}
 
                                         {/* Expanded detail */}
                                         {selected?.id === r.id && (
-                                            <div style={{ marginTop: '0.875rem', paddingTop: '0.875rem', borderTop: '1px solid #f3f4f6' }}>
+                                            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)', animation: 'slideDown 0.15s ease-out' }}>
 
                                                 {r.category_ratings && Object.keys(r.category_ratings).length > 0 && (
-                                                    <div style={{ marginBottom: '0.875rem' }}>
-                                                        <div style={{ fontSize: '0.68rem', fontWeight: '600', color: '#bbb', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.5rem' }}>
-                                                            Category breakdown
+                                                    <div style={{ marginBottom: '1rem' }}>
+                                                        <div style={{ fontSize: '0.68rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.5rem' }}>
+                                                            Parameters ratings
                                                         </div>
                                                         {Object.entries(r.category_ratings).map(([cat, val]) => (
                                                             <div key={cat} style={{
                                                                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                                                padding: '0.45rem 0.625rem', borderRadius: '6px', marginBottom: '0.2rem',
-                                                                background: '#fff', border: '1px solid #f3f4f6'
+                                                                padding: '0.5rem 0.75rem', borderRadius: '8px', marginBottom: '0.25rem',
+                                                                background: '#ffffff', border: '1px solid var(--border-color)'
                                                             }}>
-                                                                <span style={{ fontSize: '0.8rem', color: '#333', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat}</span>
+                                                                <span style={{ fontSize: '0.8rem', fontWeight: '500', color: 'var(--text-main)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat}</span>
                                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
-                                                                    <div style={{ width: '72px', height: '5px', background: '#f3f4f6', borderRadius: '3px', overflow: 'hidden' }}>
+                                                                    <div style={{ width: '72px', height: '5px', background: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
                                                                         <div style={{
                                                                             height: '5px', borderRadius: '3px',
                                                                             width: `${(val / 5) * 100}%`,
@@ -343,7 +345,7 @@ export default function ReviewsPage() {
                                                                         }} />
                                                                     </div>
                                                                     <span style={{
-                                                                        fontSize: '0.78rem', fontWeight: '600', minWidth: '28px',
+                                                                        fontSize: '0.78rem', fontWeight: '700', minWidth: '28px', textRight: 'right',
                                                                         color: val <= 2 ? '#dc2626' : val === 3 ? '#d97706' : '#16a34a'
                                                                     }}>
                                                                         {val}/5
@@ -355,71 +357,75 @@ export default function ReviewsPage() {
                                                 )}
 
                                                 {r.feedback && (
-                                                    <div style={{ marginBottom: '0.75rem' }}>
-                                                        <div style={{ fontSize: '0.68rem', fontWeight: '600', color: '#bbb', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.4rem' }}>
-                                                            {r.rating >= 4 ? 'Compliment' : 'Feedback'}
+                                                    <div style={{ marginBottom: '1rem' }}>
+                                                        <div style={{ fontSize: '0.68rem', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.5rem' }}>
+                                                            {r.rating >= 4 ? 'Compliment text' : 'Feedback details'}
                                                         </div>
                                                         <p style={{
-                                                            fontSize: '0.85rem', color: '#444', lineHeight: '1.6',
-                                                            background: '#f9fafb', padding: '0.7rem 0.875rem', borderRadius: '8px'
+                                                            fontSize: '0.825rem', color: '#334155', lineHeight: '1.6',
+                                                            background: '#ffffff', padding: '0.75rem 1rem', borderRadius: '8px',
+                                                            border: '1px solid var(--border-color)', margin: 0, fontStyle: 'italic'
                                                         }}>
-                                                            {r.feedback}
+                                                            "{r.feedback}"
                                                         </p>
                                                     </div>
                                                 )}
 
-                                                <div style={{ fontSize: '0.68rem', color: '#ccc' }}>
-                                                    {new Date(r.created_at).toLocaleString('en-ZA', {
-                                                        day: 'numeric', month: 'long', year: 'numeric',
-                                                        hour: '2-digit', minute: '2-digit'
-                                                    })}
+                                                <div style={{ fontSize: '0.68rem', color: 'var(--text-light)', display: 'flex', justifyContent: 'space-between' }}>
+                                                    <span>Submission Time</span>
+                                                    <span>
+                                                        {new Date(r.created_at).toLocaleString('en-ZA', {
+                                                            day: 'numeric', month: 'long', year: 'numeric',
+                                                            hour: '2-digit', minute: '2-digit'
+                                                        })}
+                                                    </span>
                                                 </div>
                                             </div>
                                         )}
 
-                                        <div style={{ fontSize: '0.68rem', color: '#ccc', marginTop: '0.4rem', textAlign: 'right' }}>
-                                            {selected?.id === r.id ? '↑ collapse' : '↓ details'}
+                                        <div style={{ fontSize: '0.68rem', color: 'var(--text-light)', marginTop: '0.5rem', textAlign: 'right', fontWeight: '500' }}>
+                                            {selected?.id === r.id ? 'Click to collapse ↑' : 'Click for details ↓'}
                                         </div>
                                     </div>
                                 ))
-                            )}
+                             )}
                         </div>
 
                         {/* Rating breakdown sidebar */}
                         <div className="rev-sidebar-card">
-                            <h2 style={{ fontSize: '0.875rem', fontWeight: '600', color: '#111', marginBottom: '1rem' }}>
-                                Rating breakdown
+                            <h2 style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--text-main)', marginBottom: '1.25rem', margin: 0 }}>
+                                Score distribution
                             </h2>
                             {ratingCounts.map(({ star, count, pct }) => (
-                                <div key={star} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.625rem' }}>
-                                    <span style={{ fontSize: '0.78rem', color: '#666', width: '22px', flexShrink: 0 }}>
+                                <div key={star} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                                    <span style={{ fontSize: '0.78rem', fontWeight: '600', color: 'var(--text-muted)', width: '22px', flexShrink: 0 }}>
                                         {star}★
                                     </span>
-                                    <div style={{ flex: 1, height: '7px', background: '#f3f4f6', borderRadius: '4px', overflow: 'hidden', minWidth: 0 }}>
+                                    <div style={{ flex: 1, height: '7px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden', minWidth: 0 }}>
                                         <div style={{
                                             height: '7px', borderRadius: '4px',
                                             width: `${pct}%`,
-                                            background: star >= 4 ? '#16a34a' : star === 3 ? '#d97706' : '#dc2626',
+                                            background: star >= 4 ? 'var(--primary)' : star === 3 ? '#d97706' : '#dc2626',
                                             transition: 'width 0.4s ease'
                                         }} />
                                     </div>
-                                    <span style={{ fontSize: '0.78rem', color: '#aaa', width: '20px', textAlign: 'right', flexShrink: 0 }}>
+                                    <span style={{ fontSize: '0.78rem', color: 'var(--text-light)', width: '20px', textAlign: 'right', flexShrink: 0, fontWeight: '500' }}>
                                         {count}
                                     </span>
                                 </div>
                             ))}
 
                             {avgRating && (
-                                <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid #f3f4f6', textAlign: 'center' }}>
-                                    <div style={{ fontSize: '2rem', fontWeight: '700', color: '#111', letterSpacing: '-0.03em', lineHeight: 1 }}>
+                                <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border-color)', textAlign: 'center' }}>
+                                    <div style={{ fontSize: '2.5rem', fontWeight: '800', color: 'var(--text-main)', letterSpacing: '-0.04em', lineHeight: 1 }}>
                                         {avgRating}
                                     </div>
-                                    <div style={{ fontSize: '0.75rem', color: '#aaa', marginTop: '0.25rem' }}>
-                                        avg out of 5
+                                    <div style={{ fontSize: '0.72rem', fontWeight: '600', color: 'var(--text-muted)', marginTop: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                        Average Score
                                     </div>
-                                    <div style={{ color: '#f59e0b', fontSize: '0.9rem', marginTop: '0.35rem' }}>
+                                    <div style={{ color: '#f59e0b', fontSize: '1rem', marginTop: '0.5rem', letterSpacing: '2px' }}>
                                         {'★'.repeat(Math.round(parseFloat(avgRating)))}
-                                        <span style={{ color: '#e5e5e5' }}>{'★'.repeat(5 - Math.round(parseFloat(avgRating)))}</span>
+                                        <span style={{ color: '#e2e8f0' }}>{'★'.repeat(5 - Math.round(parseFloat(avgRating)))}</span>
                                     </div>
                                 </div>
                             )}

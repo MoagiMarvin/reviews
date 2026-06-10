@@ -14,7 +14,7 @@ const PRESETS = {
 
 const DELAYS = [
     { label: 'Instant', value: 0 },
-    { label: '30 minutes', value: 30 },
+    { label: '30 mins', value: 30 },
     { label: '1 hour', value: 60 },
     { label: '2 hours', value: 120 },
     { label: '4 hours', value: 240 },
@@ -27,10 +27,16 @@ export default function SettingsPage() {
     const [saving, setSaving] = useState(false)
     const [saved, setSaved] = useState(false)
     const [error, setError] = useState('')
+    
+    // Editable States
+    const [name, setName] = useState('')
+    const [email, setEmail] = useState('')
+    const [slug, setSlug] = useState('')
+    const [googleLink, setGoogleLink] = useState('')
     const [delay, setDelay] = useState(60)
     const [categories, setCategories] = useState(['Overall experience'])
     const [newCategory, setNewCategory] = useState('')
-    const [googleLink, setGoogleLink] = useState('')
+    const [copied, setCopied] = useState(false)
 
     useEffect(() => { loadSettings() }, [])
 
@@ -44,13 +50,16 @@ export default function SettingsPage() {
             const bizData = await bizRes.json()
             const settingsData = await settingsRes.json()
 
-            console.log('Settings loaded:', settingsData)
-
-            if (bizData.business) setBusiness(bizData.business)
+            if (bizData.business) {
+                const b = bizData.business
+                setBusiness(b)
+                setName(b.name || '')
+                setEmail(b.email || '')
+                setSlug(b.slug || '')
+            }
 
             if (settingsData.settings) {
                 const s = settingsData.settings
-                // Handle 0 (instant) correctly
                 setDelay(s.send_delay_minutes !== null && s.send_delay_minutes !== undefined
                     ? s.send_delay_minutes
                     : 60)
@@ -72,30 +81,35 @@ export default function SettingsPage() {
         setError('')
         setSaved(false)
 
-        console.log('Saving delay:', delay)
-
-        const res = await fetch('/api/business/settings', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                sendDelayMinutes: delay,
-                ratingCategories: categories,
-                googleReviewLink: googleLink
+        try {
+            const res = await fetch('/api/business/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: name,
+                    sendDelayMinutes: delay,
+                    ratingCategories: categories,
+                    googleReviewLink: googleLink
+                })
             })
-        })
 
-        const data = await res.json()
-        console.log('Save response:', data)
+            const data = await res.json()
 
-        if (data.error) {
-            setError(data.error)
+            if (data.error) {
+                setError(data.error)
+                setSaving(false)
+                return
+            }
+
+            // Sync changes with local state so sidebar name updates instantly
+            setBusiness(prev => prev ? { ...prev, name: name } : null)
+            setSaved(true)
+            setTimeout(() => setSaved(false), 3000)
+        } catch (err) {
+            setError('An error occurred while saving')
+        } finally {
             setSaving(false)
-            return
         }
-
-        setSaved(true)
-        setSaving(false)
-        setTimeout(() => setSaved(false), 3000)
     }
 
     function applyPreset(preset) {
@@ -114,134 +128,466 @@ export default function SettingsPage() {
         setCategories(categories.filter((_, i) => i !== index))
     }
 
+    function handleCopyLink() {
+        if (typeof window === 'undefined') return
+        const feedbackUrl = `${window.location.origin}/feedback/${slug}`
+        navigator.clipboard.writeText(feedbackUrl)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+    }
+
     if (loading) return (
         <div style={centerStyle}>
-            <p style={{ color: '#888' }}>Loading...</p>
+            <p style={{ color: '#64748b', fontSize: '0.875rem' }}>Loading settings...</p>
         </div>
     )
 
     return (
         <BusinessLayout>
+            <style>{`
+                .settings-page {
+                    max-width: 800px;
+                    margin: 0;
+                    padding: 2rem 3rem 4rem 3rem;
+                    box-sizing: border-box;
+                }
+                .settings-title {
+                    font-size: 1.5rem;
+                    fontWeight: 700;
+                    color: var(--text-main);
+                    letter-spacing: -0.03em;
+                    margin-bottom: 0.25rem;
+                }
+                .settings-sub {
+                    color: var(--text-muted);
+                    font-size: 0.875rem;
+                    margin-bottom: 2rem;
+                }
+                .settings-card {
+                    background: var(--bg-card);
+                    border: 1px solid var(--border-color);
+                    border-radius: var(--radius-lg);
+                    padding: 1.5rem;
+                    margin-bottom: 1.5rem;
+                    box-shadow: var(--shadow-sm);
+                    transition: box-shadow 0.2s ease;
+                }
+                .settings-card:hover {
+                    box-shadow: var(--shadow-md);
+                }
+                .settings-card-title {
+                    font-size: 1rem;
+                    font-weight: 600;
+                    color: var(--text-main);
+                    margin-bottom: 0.25rem;
+                }
+                .settings-card-sub {
+                    font-size: 0.8rem;
+                    color: var(--text-muted);
+                    margin-bottom: 1.25rem;
+                }
+                .settings-input {
+                    width: 100%;
+                    padding: 0.75rem 1rem;
+                    border-radius: var(--radius-md);
+                    border: 1px solid var(--border-hover);
+                    font-size: 0.9rem;
+                    outline: none;
+                    box-sizing: border-box;
+                    font-family: inherit;
+                    color: var(--text-main);
+                    transition: all 0.15s ease;
+                }
+                .settings-input:focus {
+                    border-color: var(--primary);
+                    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
+                }
+                .settings-input:disabled {
+                    background: #f1f5f9;
+                    color: var(--text-muted);
+                    cursor: not-allowed;
+                    border-color: #e2e8f0;
+                }
+                .delay-grid {
+                    display: grid;
+                    grid-template-columns: repeat(3, minmax(0, 1fr));
+                    gap: 0.5rem;
+                }
+                @media (max-width: 480px) {
+                    .delay-grid {
+                        grid-template-columns: repeat(2, minmax(0, 1fr));
+                    }
+                }
+                .delay-btn {
+                    padding: 0.625rem;
+                    border-radius: var(--radius-md);
+                    font-size: 0.825rem;
+                    font-weight: 500;
+                    cursor: pointer;
+                    font-family: inherit;
+                    border: 1px solid var(--border-hover);
+                    transition: all 0.15s ease;
+                    text-align: center;
+                }
+                .delay-btn:hover {
+                    border-color: var(--text-light);
+                }
+                .delay-btn.selected {
+                    background: var(--text-main) !important;
+                    color: #fff !important;
+                    border-color: var(--text-main) !important;
+                }
+                .preset-btn {
+                    padding: 0.4rem 0.875rem;
+                    border-radius: 100px;
+                    border: 1px solid var(--border-hover);
+                    background: #f8fafc;
+                    color: var(--text-muted);
+                    font-size: 0.78rem;
+                    font-weight: 500;
+                    cursor: pointer;
+                    font-family: inherit;
+                    transition: all 0.15s ease;
+                }
+                .preset-btn:hover {
+                    background: #f1f5f9;
+                    color: var(--text-main);
+                    border-color: var(--text-light);
+                }
+                .cat-row {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 0.625rem 1rem;
+                    background: #f8fafc;
+                    border: 1px solid var(--border-color);
+                    border-radius: var(--radius-md);
+                    margin-bottom: 0.5rem;
+                    transition: all 0.15s ease;
+                }
+                .cat-row:hover {
+                    border-color: var(--border-hover);
+                }
+                .remove-btn {
+                    background: transparent;
+                    border: none;
+                    color: var(--text-light);
+                    cursor: pointer;
+                    font-size: 0.875rem;
+                    padding: 0.25rem;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 50%;
+                    transition: all 0.15s ease;
+                }
+                .remove-btn:hover:not(:disabled) {
+                    color: #ef4444;
+                    background: #fef2f2;
+                }
+                .remove-btn:disabled {
+                    opacity: 0.3;
+                    cursor: not-allowed;
+                }
+                .add-btn {
+                    padding: 0.75rem 1.25rem;
+                    border-radius: var(--radius-md);
+                    background: var(--text-main);
+                    color: #fff;
+                    border: none;
+                    font-size: 0.875rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    font-family: inherit;
+                    white-space: nowrap;
+                    transition: background 0.15s ease;
+                }
+                .add-btn:hover {
+                    background: #1e293b;
+                }
+                .save-btn {
+                    width: 100%;
+                    padding: 0.875rem;
+                    border-radius: var(--radius-md);
+                    background: var(--primary);
+                    color: #fff;
+                    font-size: 0.95rem;
+                    font-weight: 600;
+                    border: none;
+                    cursor: pointer;
+                    margin-top: 1rem;
+                    transition: all 0.2s ease;
+                    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);
+                }
+                .save-btn:hover:not(:disabled) {
+                    background: var(--primary-hover);
+                    box-shadow: 0 6px 16px rgba(22, 163, 74, 0.3);
+                }
+                .save-btn:disabled {
+                    background: var(--text-light);
+                    opacity: 0.7;
+                    cursor: not-allowed;
+                    box-shadow: none;
+                }
+                .status-msg {
+                    padding: 0.875rem 1rem;
+                    border-radius: var(--radius-md);
+                    margin-bottom: 1.5rem;
+                    font-size: 0.875rem;
+                    font-weight: 500;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    animation: slideDown 0.2s ease-out;
+                }
+                @keyframes slideDown {
+                    from { transform: translateY(-8px); opacity: 0; }
+                    to { transform: translateY(0); opacity: 1; }
+                }
+                .copy-badge {
+                    background: var(--primary-light);
+                    color: var(--primary);
+                    border: 1px solid var(--primary-border);
+                    font-size: 0.75rem;
+                    padding: 0.25rem 0.5rem;
+                    border-radius: 4px;
+                    }
+                @media (max-width: 767px) {
+                    .settings-page {
+                        padding: 1.25rem 1rem;
+                    }
+                }
+            `}</style>
             <Sidebar business={business} />
             <div style={mainStyle} className="main-with-sidebar">
-                <div style={pageStyle}>
+                <div className="settings-page">
 
-                    <h1 style={pageTitleStyle}>Settings</h1>
-                    <p style={pageSubStyle}>Manage your feedback preferences</p>
+                    <h1 className="settings-title">Account Settings</h1>
+                    <p className="settings-sub">Manage your business profile and feedback preferences</p>
 
-                    {error && <div style={errorStyle}>{error}</div>}
-                    {saved && <div style={successStyle}>Settings saved ✓</div>}
+                    {error && (
+                        <div className="status-msg" style={{ background: '#fee2e2', color: '#dc2626', border: '1px solid #fecaca' }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="12" y1="8" x2="12" y2="12" />
+                                <line x1="12" y1="16" x2="12.01" y2="16" />
+                            </svg>
+                            {error}
+                        </div>
+                    )}
+                    {saved && (
+                        <div className="status-msg" style={{ background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                            Account settings successfully saved
+                        </div>
+                    )}
 
-                    {/* Google Review Link */}
-                    <div style={cardStyle}>
-                        <h2 style={cardTitleStyle}>Google review link</h2>
-                        <p style={cardSubStyle}>
-                            Where happy customers get sent to leave a Google review
-                        </p>
-                        <input
-                            type="url"
-                            placeholder="https://g.page/r/..."
-                            value={googleLink}
-                            onChange={e => setGoogleLink(e.target.value)}
-                            style={inputStyle}
-                        />
-                        <p style={hintStyle}>
-                            Get this from Google Business Profile → Get more reviews
-                        </p>
+                    {/* Section 1: Business Profile */}
+                    <div className="settings-card">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                            <div style={{
+                                width: '56px',
+                                height: '56px',
+                                borderRadius: '16px',
+                                background: 'linear-gradient(135deg, #16a34a, #10b981)',
+                                color: '#ffffff',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyHeight: 'center',
+                                justifyContent: 'center',
+                                fontSize: '1.25rem',
+                                fontWeight: '800',
+                                boxShadow: '0 4px 10px rgba(22, 163, 74, 0.15)'
+                            }}>
+                                {name ? name.slice(0, 2).toUpperCase() : 'RE'}
+                            </div>
+                            <div>
+                                <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '600', color: 'var(--text-main)' }}>Business Avatar</h3>
+                                <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>Registered slug: /{slug}</p>
+                            </div>
+                        </div>
+
+                        <h2 className="settings-card-title">Business profile</h2>
+                        <p className="settings-card-sub">Public details about your organization</p>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            <div>
+                                <label style={labelStyle}>Business name</label>
+                                <input
+                                    type="text"
+                                    value={name}
+                                    onChange={e => setName(e.target.value)}
+                                    placeholder="Enter business name"
+                                    className="settings-input"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label style={labelStyle}>Slug (Feedback URL identifier)</label>
+                                <input
+                                    type="text"
+                                    value={slug}
+                                    disabled
+                                    className="settings-input"
+                                />
+                            </div>
+                            <div>
+                                <label style={labelStyle}>Email address (Read-only)</label>
+                                <input
+                                    type="email"
+                                    value={email}
+                                    disabled
+                                    className="settings-input"
+                                />
+                            </div>
+                        </div>
                     </div>
 
-                    {/* Delay */}
-                    <div style={cardStyle}>
-                        <h2 style={cardTitleStyle}>Message delay</h2>
-                        <p style={cardSubStyle}>
-                            How long after submitting a number before the WhatsApp sends
-                        </p>
-                        <div style={delayGridStyle}>
-                            {DELAYS.map(d => (
-                                <button
-                                    key={d.value}
-                                    onClick={() => setDelay(d.value)}
-                                    style={{
-                                        ...delayBtnStyle,
-                                        background: delay === d.value ? '#111' : '#f9fafb',
-                                        color: delay === d.value ? '#fff' : '#555',
-                                        border: delay === d.value
-                                            ? '1px solid #111'
-                                            : '1px solid #e5e5e5'
-                                    }}
-                                >
-                                    {d.label}
-                                </button>
-                            ))}
+                    {/* Section 2: Feedback Link Widget */}
+                    <div className="settings-card" style={{ background: 'linear-gradient(to bottom right, #ffffff, #f8fafc)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div>
+                                <h2 className="settings-card-title">Your feedback link</h2>
+                                <p className="settings-card-sub">Share this link directly with customers to receive reviews</p>
+                            </div>
+                            {copied && <span className="copy-badge">Copied!</span>}
                         </div>
-                        <p style={{ ...hintStyle, marginTop: '0.75rem' }}>
-                            Currently selected: <strong>
-                                {DELAYS.find(d => d.value === delay)?.label || `${delay} minutes`}
-                            </strong>
-                        </p>
-                    </div>
-
-                    {/* Rating categories */}
-                    <div style={cardStyle}>
-                        <h2 style={cardTitleStyle}>Rating categories</h2>
-                        <p style={cardSubStyle}>
-                            What customers rate when they leave feedback
-                        </p>
-
-                        <p style={labelStyle}>Quick presets</p>
-                        <div style={presetGridStyle}>
-                            {Object.keys(PRESETS).map(preset => (
-                                <button
-                                    key={preset}
-                                    onClick={() => applyPreset(preset)}
-                                    style={presetBtnStyle}
-                                >
-                                    {preset}
-                                </button>
-                            ))}
-                        </div>
-
-                        <p style={{ ...labelStyle, marginTop: '1.25rem' }}>
-                            Current categories
-                        </p>
-                        <div style={{ marginBottom: '1rem' }}>
-                            {categories.map((cat, i) => (
-                                <div key={i} style={catRowStyle}>
-                                    <span style={{ fontSize: '0.875rem', color: '#111' }}>
-                                        {cat}
-                                    </span>
-                                    <button
-                                        onClick={() => removeCategory(i)}
-                                        style={removeBtnStyle}
-                                        disabled={categories.length === 1}
-                                    >
-                                        ✕
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            <input
-                                type="text"
-                                placeholder="Add custom category..."
-                                value={newCategory}
-                                onChange={e => setNewCategory(e.target.value)}
-                                onKeyDown={e => e.key === 'Enter' && addCategory()}
-                                style={{ ...inputStyle, marginBottom: 0, flex: 1 }}
-                            />
-                            <button onClick={addCategory} style={addBtnStyle}>
-                                Add
+                        <div style={{
+                            display: 'flex',
+                            gap: '0.5rem',
+                            background: '#ffffff',
+                            border: '1px solid var(--border-hover)',
+                            padding: '0.5rem 0.5rem 0.5rem 1rem',
+                            borderRadius: '12px',
+                            alignItems: 'center'
+                        }}>
+                            <span style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontFamily: 'monospace', wordBreak: 'break-all', flex: 1 }}>
+                                {typeof window !== 'undefined' ? `${window.location.origin}/feedback/${slug}` : `.../feedback/${slug}`}
+                            </span>
+                            <button
+                                onClick={handleCopyLink}
+                                style={{
+                                    background: 'var(--text-main)',
+                                    color: '#ffffff',
+                                    border: 'none',
+                                    borderRadius: '8px',
+                                    padding: '0.5rem 1rem',
+                                    fontSize: '0.78rem',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    transition: 'opacity 0.15s'
+                                }}
+                                onMouseEnter={e => e.target.style.opacity = '0.9'}
+                                onMouseLeave={e => e.target.style.opacity = '1'}
+                            >
+                                Copy Link
                             </button>
+                        </div>
+                    </div>
+
+                    {/* Section 3: Integrations */}
+                    <div className="settings-card">
+                        <h2 className="settings-card-title">Google integration</h2>
+                        <p className="settings-card-sub">Redirect customers with ratings 4 stars or above to leave a public review here</p>
+                        
+                        <div>
+                            <label style={labelStyle}>Google Review Link</label>
+                            <input
+                                type="url"
+                                placeholder="https://g.page/r/..."
+                                value={googleLink}
+                                onChange={e => setGoogleLink(e.target.value)}
+                                className="settings-input"
+                            />
+                            <p style={hintStyle}>
+                                Link format: <code>https://g.page/r/...</code> or <code>https://search.google.com/local/writereview...</code>
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Section 4: Customize */}
+                    <div className="settings-card">
+                        <h2 className="settings-card-title">Preferences & custom settings</h2>
+                        <p className="settings-card-sub">Tailor how reviews are delayed and what categories are rated</p>
+
+                        {/* Delay */}
+                        <div style={{ marginBottom: '1.75rem' }}>
+                            <label style={{ ...labelStyle, marginBottom: '0.5rem' }}>WhatsApp message delay</label>
+                            <div className="delay-grid">
+                                {DELAYS.map(d => (
+                                    <button
+                                        key={d.value}
+                                        onClick={() => setDelay(d.value)}
+                                        className={`delay-btn ${delay === d.value ? 'selected' : ''}`}
+                                        style={{
+                                            background: delay === d.value ? 'var(--text-main)' : '#ffffff',
+                                            color: delay === d.value ? '#ffffff' : 'var(--text-muted)'
+                                        }}
+                                    >
+                                        {d.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Categories */}
+                        <div>
+                            <label style={{ ...labelStyle, marginBottom: '0.5rem' }}>Rating categories presets</label>
+                            <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+                                {Object.keys(PRESETS).map(preset => (
+                                    <button
+                                        key={preset}
+                                        onClick={() => applyPreset(preset)}
+                                        className="preset-btn"
+                                    >
+                                        {preset}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <label style={{ ...labelStyle, marginBottom: '0.5rem' }}>Active rating parameters</label>
+                            <div style={{ marginBottom: '1rem' }}>
+                                {categories.map((cat, i) => (
+                                    <div key={i} className="cat-row">
+                                        <span style={{ fontSize: '0.85rem', fontWeight: '500', color: 'var(--text-main)' }}>
+                                            {cat}
+                                        </span>
+                                        <button
+                                            onClick={() => removeCategory(i)}
+                                            className="remove-btn"
+                                            disabled={categories.length === 1}
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <input
+                                    type="text"
+                                    placeholder="Create custom category..."
+                                    value={newCategory}
+                                    onChange={e => setNewCategory(e.target.value)}
+                                    onKeyDown={e => e.key === 'Enter' && addCategory()}
+                                    className="settings-input"
+                                    style={{ flex: 1 }}
+                                />
+                                <button onClick={addCategory} className="add-btn">
+                                    Add
+                                </button>
+                            </div>
                         </div>
                     </div>
 
                     <button
                         onClick={handleSave}
-                        disabled={saving}
-                        style={saveBtnStyle}
+                        disabled={saving || !name.trim()}
+                        className="save-btn"
                     >
-                        {saving ? 'Saving...' : 'Save settings'}
+                        {saving ? 'Saving changes...' : 'Save settings'}
                     </button>
 
                 </div>
@@ -250,25 +596,7 @@ export default function SettingsPage() {
     )
 }
 
-const centerStyle = { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }
-const layoutStyle = { display: 'flex', minHeight: '100vh', background: '#fafafa' }
+const centerStyle = { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }
 const mainStyle = { width: '100%', minWidth: 0 }
-const pageStyle = { maxWidth: '680px', margin: '0 auto', padding: '2rem 1.5rem', boxSizing: 'border-box' }
-const pageTitleStyle = { fontSize: '1.4rem', fontWeight: '600', color: '#111', marginBottom: '0.25rem' }
-const pageSubStyle = { color: '#888', fontSize: '0.875rem', marginBottom: '1.5rem' }
-const cardStyle = { background: '#fff', border: '1px solid #e5e5e5', borderRadius: '12px', padding: '1.25rem', marginBottom: '1rem' }
-const cardTitleStyle = { fontSize: '0.95rem', fontWeight: '600', color: '#111', marginBottom: '0.25rem' }
-const cardSubStyle = { fontSize: '0.8rem', color: '#888', marginBottom: '1rem' }
-const inputStyle = { width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #e5e5e5', fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', marginBottom: '0.5rem' }
-const hintStyle = { fontSize: '0.75rem', color: '#aaa' }
-const labelStyle = { fontSize: '0.8rem', fontWeight: '500', color: '#555', marginBottom: '0.5rem', display: 'block' }
-const delayGridStyle = { display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }
-const delayBtnStyle = { padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.875rem', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }
-const presetGridStyle = { display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }
-const presetBtnStyle = { padding: '0.4rem 0.875rem', borderRadius: '100px', border: '1px solid #e5e5e5', background: '#f9fafb', color: '#555', fontSize: '0.8rem', cursor: 'pointer', fontFamily: 'inherit' }
-const catRowStyle = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.625rem 0.875rem', background: '#f9fafb', borderRadius: '8px', marginBottom: '0.5rem' }
-const removeBtnStyle = { background: 'transparent', border: 'none', color: '#aaa', cursor: 'pointer', fontSize: '0.8rem', padding: '0' }
-const addBtnStyle = { padding: '0.75rem 1.25rem', borderRadius: '8px', background: '#111', color: '#fff', border: 'none', fontSize: '0.875rem', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }
-const saveBtnStyle = { width: '100%', padding: '0.875rem', borderRadius: '8px', background: '#111', color: '#fff', fontSize: '0.95rem', fontWeight: '600', border: 'none', cursor: 'pointer', marginTop: '0.5rem' }
-const errorStyle = { background: '#fee2e2', color: '#dc2626', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.875rem' }
-const successStyle = { background: '#f0fdf4', color: '#16a34a', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.875rem' }
+const labelStyle = { fontSize: '0.78rem', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '0.4rem', display: 'block', textTransform: 'uppercase', letterSpacing: '0.03em' }
+const hintStyle = { fontSize: '0.72rem', color: 'var(--text-light)', marginTop: '0.4rem' }

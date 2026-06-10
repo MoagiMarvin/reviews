@@ -6,11 +6,9 @@ export default function BusinessLayout({ children }) {
             <style>{`
                 .business-layout {
                     min-height: 100vh;
-                    background: #fafafa;
-                    overflow-x: hidden;
+                    background: #f8fafc;
                     box-sizing: border-box;
                     margin-left: 220px;
-                    width: calc(100vw - 220px);
                 }
                 @media (max-width: 767px) {
                     .business-layout {

@@ -57,13 +57,18 @@ export async function POST(req) {
             ? parseInt(body.sendDelayMinutes)
             : 60
 
+        const updateFields = {
+            send_delay_minutes: sendDelayMinutes,
+            rating_categories: body.ratingCategories || [],
+            google_review_link: body.googleReviewLink || null
+        }
+        if (body.name) {
+            updateFields.name = body.name
+        }
+
         const { error } = await supabaseAdmin
             .from('businesses')
-            .update({
-                send_delay_minutes: sendDelayMinutes,
-                rating_categories: body.ratingCategories || [],
-                google_review_link: body.googleReviewLink || null
-            })
+            .update(updateFields)
             .eq('id', businessId)
 
         if (error) {
