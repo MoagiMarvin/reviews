@@ -1,10 +1,13 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/business/Sidebar'
 import BusinessLayout from '@/components/business/BusinessLayout'
 
 export default function SendPage() {
+    const router = useRouter()
     const [business, setBusiness] = useState(null)
+    const [worker, setWorker] = useState(null)
     const [loading, setLoading] = useState(true)
     const [sending, setSending] = useState(false)
     const [success, setSuccess] = useState(false)
@@ -17,6 +20,30 @@ export default function SendPage() {
 
     async function loadData() {
         try {
+            // Check for a worker session first
+            const workerRes = await fetch('/api/workers/me')
+            const workerData = await workerRes.json()
+
+            if (workerData.worker) {
+                setWorker(workerData.worker)
+                setBusiness(workerData.business)
+
+                const [settingsRes, reqRes] = await Promise.all([
+                    fetch('/api/business/settings'),
+                    fetch('/api/requests')
+                ])
+                const settingsData = await settingsRes.json()
+                const reqData = await reqRes.json()
+                if (settingsData.settings) {
+                    const saved = settingsData.settings.send_delay_minutes
+                    setDelay(saved !== null && saved !== undefined ? saved : 60)
+                }
+                if (reqData.requests) setRequests(reqData.requests)
+                setLoading(false)
+                return
+            }
+
+            // Otherwise normal owner flow
             const [bizRes, settingsRes, reqRes] = await Promise.all([
                 fetch('/api/business/me'),
                 fetch('/api/business/settings'),
@@ -25,7 +52,8 @@ export default function SendPage() {
             const bizData = await bizRes.json()
             const settingsData = await settingsRes.json()
             const reqData = await reqRes.json()
-            if (bizData.business) setBusiness(bizData.business)
+            if (!bizData.business) { router.push('/business/login'); return }
+            setBusiness(bizData.business)
             if (settingsData.settings) {
                 const saved = settingsData.settings.send_delay_minutes
                 setDelay(saved !== null && saved !== undefined ? saved : 60)
@@ -229,7 +257,7 @@ export default function SendPage() {
                     .send-page { padding: 1.25rem 1rem; }
                 }
             `}</style>
-            <Sidebar business={business} />
+            <Sidebar business={business} worker={worker} />
             <div style={mainStyle} className="main-with-sidebar">
                 <div className="send-page">
                     <h1 className="send-title">Send Request</h1>
@@ -243,7 +271,7 @@ export default function SendPage() {
                         <div className="send-card">
                             <h2 className="send-card-title">New feedback request</h2>
                             <p className="send-card-sub">Queue a feedback request to a customer's WhatsApp line</p>
-                            
+
                             {error && (
                                 <div className="status-msg" style={{ background: '#fee2e2', color: '#dc2626', border: '1px solid #fecaca' }}>
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -299,8 +327,8 @@ export default function SendPage() {
                                                 <div style={{ fontSize: '0.58rem', opacity: 0.8 }}>online</div>
                                             </div>
                                             <div style={{ display: 'flex', gap: '0.5rem', opacity: 0.85 }}>
-                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" ry="2" /></svg>
                                             </div>
                                         </div>
                                         <div className="wa-chat-body">
@@ -310,7 +338,7 @@ export default function SendPage() {
                                                 {`!\n\nHow was your experience?\n👉 ${typeof window !== 'undefined' ? window.location.origin : '...'}/feedback/${business?.slug || 'slug'}\n\nWe appreciate your support 🙏`}
                                                 <div className="wa-time-check">
                                                     <span>{new Date().toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })}</span>
-                                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
                                                 </div>
                                             </div>
                                         </div>
@@ -328,7 +356,9 @@ export default function SendPage() {
                                     <polyline points="12 6 12 12 16 14" />
                                 </svg>
                                 <span>Configured delay: <strong>{delayLabel(delay)}</strong></span>
-                                <a href="/business/settings" style={{ marginLeft: 'auto', color: 'var(--primary)', fontWeight: '600', textDecoration: 'none' }}>Change</a>
+                                {!worker && (
+                                    <a href="/business/settings" style={{ marginLeft: 'auto', color: 'var(--primary)', fontWeight: '600', textDecoration: 'none' }}>Change</a>
+                                )}
                             </div>
                         </div>
 
@@ -336,7 +366,7 @@ export default function SendPage() {
                         <div className="send-card">
                             <h2 className="send-card-title">Recent requests</h2>
                             <p className="send-card-sub">{requests.length} request logs captured in database</p>
-                            
+
                             {requests.length === 0 ? (
                                 <p style={{ fontSize: '0.85rem', color: 'var(--text-light)', padding: '1rem 0', textAlign: 'center' }}>No requests dispatched yet</p>
                             ) : (

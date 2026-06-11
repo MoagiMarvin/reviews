@@ -6,10 +6,17 @@ export default function LoginPage() {
     const router = useRouter()
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
+    const [isStaff, setIsStaff] = useState(false)
+
     const [form, setForm] = useState({ email: '', password: '' })
+    const [staffForm, setStaffForm] = useState({ company_email: '', username: '', password: '' })
 
     const handleChange = (e) => {
         setForm({ ...form, [e.target.name]: e.target.value })
+    }
+
+    const handleStaffChange = (e) => {
+        setStaffForm({ ...staffForm, [e.target.name]: e.target.value })
     }
 
     const handleSubmit = async (e) => {
@@ -34,49 +41,136 @@ export default function LoginPage() {
         router.push('/business/dashboard')
     }
 
+    const handleStaffSubmit = async (e) => {
+        e.preventDefault()
+        setLoading(true)
+        setError('')
+
+        const res = await fetch('/api/workers/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(staffForm)
+        })
+
+        const data = await res.json()
+
+        if (data.error) {
+            setError(data.error)
+            setLoading(false)
+            return
+        }
+
+        router.push(data.redirect || '/business/send')
+    }
+
     return (
         <div style={containerStyle}>
             <div style={cardStyle}>
-                <h1 style={titleStyle}>Welcome back</h1>
-                <p style={subStyle}>Log in to your business dashboard</p>
+                <h1 style={titleStyle}>{isStaff ? 'Staff login' : 'Welcome back'}</h1>
+                <p style={subStyle}>
+                    {isStaff ? 'Log in to send review requests' : 'Log in to your business dashboard'}
+                </p>
 
                 {error && <div style={errorStyle}>{error}</div>}
 
-                <form onSubmit={handleSubmit}>
-                    <div style={groupStyle}>
-                        <label style={labelStyle}>Email</label>
-                        <input
-                            name="email"
-                            type="email"
-                            placeholder="you@business.co.za"
-                            value={form.email}
-                            onChange={handleChange}
-                            required
-                            style={inputStyle}
-                        />
-                    </div>
+                {!isStaff ? (
+                    <form onSubmit={handleSubmit}>
+                        <div style={groupStyle}>
+                            <label style={labelStyle}>Email</label>
+                            <input
+                                name="email"
+                                type="email"
+                                placeholder="you@business.co.za"
+                                value={form.email}
+                                onChange={handleChange}
+                                required
+                                style={inputStyle}
+                            />
+                        </div>
 
-                    <div style={groupStyle}>
-                        <label style={labelStyle}>Password</label>
-                        <input
-                            name="password"
-                            type="password"
-                            placeholder="Your password"
-                            value={form.password}
-                            onChange={handleChange}
-                            required
-                            style={inputStyle}
-                        />
-                    </div>
+                        <div style={groupStyle}>
+                            <label style={labelStyle}>Password</label>
+                            <input
+                                name="password"
+                                type="password"
+                                placeholder="Your password"
+                                value={form.password}
+                                onChange={handleChange}
+                                required
+                                style={inputStyle}
+                            />
+                        </div>
 
-                    <button type="submit" disabled={loading} style={btnStyle}>
-                        {loading ? 'Logging in...' : 'Log in'}
-                    </button>
-                </form>
+                        <button type="submit" disabled={loading} style={btnStyle}>
+                            {loading ? 'Logging in...' : 'Log in'}
+                        </button>
+                    </form>
+                ) : (
+                    <form onSubmit={handleStaffSubmit}>
+                        <div style={groupStyle}>
+                            <label style={labelStyle}>Company Email</label>
+                            <input
+                                name="company_email"
+                                type="email"
+                                placeholder="business@company.co.za"
+                                value={staffForm.company_email}
+                                onChange={handleStaffChange}
+                                required
+                                style={inputStyle}
+                            />
+                        </div>
+
+                        <div style={groupStyle}>
+                            <label style={labelStyle}>Username</label>
+                            <input
+                                name="username"
+                                type="text"
+                                placeholder="e.g. john_waiter"
+                                value={staffForm.username}
+                                onChange={handleStaffChange}
+                                required
+                                style={inputStyle}
+                            />
+                        </div>
+
+                        <div style={groupStyle}>
+                            <label style={labelStyle}>Password</label>
+                            <input
+                                name="password"
+                                type="password"
+                                placeholder="Your password"
+                                value={staffForm.password}
+                                onChange={handleStaffChange}
+                                required
+                                style={inputStyle}
+                            />
+                        </div>
+
+                        <button type="submit" disabled={loading} style={btnStyle}>
+                            {loading ? 'Logging in...' : 'Log in'}
+                        </button>
+                    </form>
+                )}
 
                 <p style={footerStyle}>
-                    No account yet?{' '}
-                    <a href="/business/register" style={linkStyle}>Register here</a>
+                    {isStaff ? (
+                        <>
+                            Business owner?{' '}
+                            <a onClick={() => { setIsStaff(false); setError('') }} style={{ ...linkStyle, cursor: 'pointer' }}>
+                                Log in here
+                            </a>
+                        </>
+                    ) : (
+                        <>
+                            Staff member?{' '}
+                            <a onClick={() => { setIsStaff(true); setError('') }} style={{ ...linkStyle, cursor: 'pointer' }}>
+                                Staff login
+                            </a>
+                            <br />
+                            No account yet?{' '}
+                            <a href="/business/register" style={linkStyle}>Register here</a>
+                        </>
+                    )}
                 </p>
             </div>
         </div>
@@ -162,7 +256,8 @@ const footerStyle = {
     textAlign: 'center',
     marginTop: '1.5rem',
     fontSize: '0.875rem',
-    color: '#888'
+    color: '#888',
+    lineHeight: '1.8'
 }
 
 const linkStyle = {

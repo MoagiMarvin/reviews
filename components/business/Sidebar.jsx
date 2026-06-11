@@ -2,17 +2,22 @@
 import { useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 
-export default function Sidebar({ business }) {
+export default function Sidebar({ business, worker }) {
     const pathname = usePathname()
     const router = useRouter()
     const [open, setOpen] = useState(false)
 
     async function handleLogout() {
+        if (worker) {
+            await fetch('/api/workers/logout', { method: 'POST' })
+            router.push('/business/login')
+            return
+        }
         await fetch('/api/business/logout', { method: 'POST' })
         router.push('/business/login')
     }
 
-    const links = [
+    const ownerLinks = [
         {
             href: '/business/dashboard',
             label: 'Overview',
@@ -44,6 +49,17 @@ export default function Sidebar({ business }) {
             )
         },
         {
+            href: '/business/team',
+            label: 'Team',
+            icon: (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+                </svg>
+            )
+        },
+        {
             href: '/business/settings',
             label: 'Account',
             icon: (
@@ -55,6 +71,30 @@ export default function Sidebar({ business }) {
         }
     ]
 
+    const workerLinks = [
+        {
+            href: '/business/send',
+            label: 'Send request',
+            icon: (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" />
+                </svg>
+            )
+        },
+        {
+            href: '/business/change-password',
+            label: 'Change password',
+            icon: (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" />
+                    <path d="M7 11V7a5 5 0 0110 0v4" />
+                </svg>
+            )
+        }
+    ]
+
+    const links = worker ? workerLinks : ownerLinks
+
     const NavLinks = () => (
         <>
             {business && (
@@ -64,7 +104,9 @@ export default function Sidebar({ business }) {
                     </div>
                     <div style={{ minWidth: 0 }}>
                         <div style={bizNameStyle}>{business.name}</div>
-                        <div style={bizSlugStyle}>/{business.slug}</div>
+                        <div style={bizSlugStyle}>
+                            {worker ? `Staff: ${worker.display_name}` : `/${business.slug}`}
+                        </div>
                     </div>
                 </div>
             )}
@@ -86,9 +128,9 @@ export default function Sidebar({ business }) {
                                 paddingLeft: active ? 'calc(0.75rem - 3px)' : '0.75rem'
                             }}
                         >
-                            <span style={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
+                            <span style={{
+                                display: 'flex',
+                                alignItems: 'center',
                                 color: active ? '#16a34a' : '#64748b',
                                 transition: 'color 0.15s'
                             }}>
@@ -173,7 +215,7 @@ export default function Sidebar({ business }) {
                 </div>
                 {business && (
                     <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '500', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {business.name}
+                        {worker ? worker.display_name : business.name}
                     </span>
                 )}
             </div>
