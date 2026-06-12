@@ -3,6 +3,30 @@ import bcrypt from "bcryptjs";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { getBusinessFromCookies } from "@/lib/auth";
 
+// GET /api/workers — list all workers for the authenticated business
+export async function GET() {
+    try {
+        const business = await getBusinessFromCookies();
+        if (!business) {
+            return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+        }
+
+        const { data: workers, error } = await supabaseAdmin
+            .from("workers")
+            .select("id, display_name, username, created_at")
+            .eq("business_id", business.id)
+            .order("created_at", { ascending: true });
+
+        if (error) throw error;
+
+        return NextResponse.json({ workers: workers || [] });
+    } catch (err) {
+        console.error("List workers error:", err);
+        return NextResponse.json({ error: "Failed to load workers" }, { status: 500 });
+    }
+}
+
+
 export async function POST(req) {
     try {
         const business = await getBusinessFromCookies();

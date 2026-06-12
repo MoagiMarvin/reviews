@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 export default function Sidebar({ business, worker }) {
     const pathname = usePathname()
@@ -114,7 +115,7 @@ export default function Sidebar({ business, worker }) {
                 {links.map(link => {
                     const active = pathname === link.href
                     return (
-                        <a
+                        <Link
                             key={link.href}
                             href={link.href}
                             onClick={() => setOpen(false)}
@@ -137,7 +138,7 @@ export default function Sidebar({ business, worker }) {
                                 {link.icon}
                             </span>
                             {link.label}
-                        </a>
+                        </Link>
                     )
                 })}
             </nav>

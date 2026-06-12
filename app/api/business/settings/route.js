@@ -1,10 +1,9 @@
 import { supabaseAdmin } from '@/lib/supabase'
-import { cookies } from 'next/headers'
+import { getBusinessId } from '@/lib/auth'
 
 export async function GET() {
     try {
-        const cookieStore = await cookies()
-        const businessId = cookieStore.get('business_id')?.value
+        const businessId = await getBusinessId()
 
         if (!businessId) {
             return Response.json(
@@ -40,8 +39,7 @@ export async function GET() {
 
 export async function POST(req) {
     try {
-        const cookieStore = await cookies()
-        const businessId = cookieStore.get('business_id')?.value
+        const businessId = await getBusinessId()
 
         if (!businessId) {
             return Response.json(
