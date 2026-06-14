@@ -73,7 +73,7 @@ export async function POST(req) {
         return NextResponse.json({
             success: true,
             must_change_password: worker.must_change_password,
-            redirect: worker.must_change_password ? "/business/change-password" : "/business/send",
+            redirect: worker.must_change_password ? "/worker/change-password" : "/worker/dashboard",
         });
     } catch (err) {
         console.error("Worker login error:", err);

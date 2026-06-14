@@ -49,28 +49,7 @@ export default function DashboardPage() {
             const workerData = await workerRes.json()
 
             if (workerData.worker) {
-                // If worker is logged in, verify they are allowed to see reviews
-                const settingsRes = await fetch('/api/business/settings')
-                const settingsData = await settingsRes.json()
-
-                if (settingsData.settings && !settingsData.settings.allow_workers_to_see_ratings) {
-                    router.push('/business/send')
-                    return
-                }
-
-                setWorker(workerData.worker)
-                setBusiness(workerData.business)
-
-                const [reqRes, revRes] = await Promise.all([
-                    fetch('/api/requests'),
-                    fetch('/api/reviews')
-                ])
-                const reqData = await reqRes.json()
-                const revData = await revRes.json()
-
-                if (reqData.requests) setRequests(reqData.requests)
-                if (revData.reviews) setReviews(revData.reviews)
-                setLoading(false)
+                router.push('/worker/dashboard')
                 return
             }
 
@@ -281,7 +260,7 @@ export default function DashboardPage() {
                     .chart-bar { width: 60%; }
                 }
             `}</style>
-            <Sidebar business={business} worker={worker} />
+            <Sidebar business={business} />
             <div style={{ width: '100%', minWidth: 0 }} className="main-with-sidebar">
                 <div className="dash-page">
 
