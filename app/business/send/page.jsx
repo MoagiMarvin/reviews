@@ -20,7 +20,30 @@ export default function SendPage() {
 
     async function loadData() {
         try {
-            // Check for a worker session first
+            // 1. Check for owner session first
+            const bizRes = await fetch('/api/business/me')
+            const bizData = await bizRes.json()
+
+            if (bizData.business) {
+                setBusiness(bizData.business)
+
+                const [settingsRes, reqRes] = await Promise.all([
+                    fetch('/api/business/settings'),
+                    fetch('/api/requests')
+                ])
+                const settingsData = await settingsRes.json()
+                const reqData = await reqRes.json()
+
+                if (settingsData.settings) {
+                    const saved = settingsData.settings.send_delay_minutes
+                    setDelay(saved !== null && saved !== undefined ? saved : 60)
+                }
+                if (reqData.requests) setRequests(reqData.requests)
+                setLoading(false)
+                return
+            }
+
+            // 2. Fall back to worker session check
             const workerRes = await fetch('/api/workers/me')
             const workerData = await workerRes.json()
 
@@ -34,6 +57,7 @@ export default function SendPage() {
                 ])
                 const settingsData = await settingsRes.json()
                 const reqData = await reqRes.json()
+
                 if (settingsData.settings) {
                     const saved = settingsData.settings.send_delay_minutes
                     setDelay(saved !== null && saved !== undefined ? saved : 60)
@@ -43,22 +67,8 @@ export default function SendPage() {
                 return
             }
 
-            // Otherwise normal owner flow
-            const [bizRes, settingsRes, reqRes] = await Promise.all([
-                fetch('/api/business/me'),
-                fetch('/api/business/settings'),
-                fetch('/api/requests')
-            ])
-            const bizData = await bizRes.json()
-            const settingsData = await settingsRes.json()
-            const reqData = await reqRes.json()
-            if (!bizData.business) { router.push('/business/login'); return }
-            setBusiness(bizData.business)
-            if (settingsData.settings) {
-                const saved = settingsData.settings.send_delay_minutes
-                setDelay(saved !== null && saved !== undefined ? saved : 60)
-            }
-            if (reqData.requests) setRequests(reqData.requests)
+            // If neither is logged in, redirect to login
+            router.push('/business/login')
         } catch (err) {
             setError('Failed to load initial data')
         } finally {

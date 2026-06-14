@@ -1,6 +1,8 @@
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendWhatsApp } from '@/lib/twilio'
 import { getBusinessId } from '@/lib/auth'
+import { getWorkerFromCookies } from '@/lib/workerAuth'
+import { cookies } from 'next/headers'
 
 export async function POST(req) {
     try {
@@ -53,6 +55,8 @@ export async function POST(req) {
 
         const scheduledFor = new Date(Date.now() + delay * 60 * 1000)
 
+        const worker = await getWorkerFromCookies()
+
         // Save request to database
         const { data: request, error } = await supabaseAdmin
             .from('requests')
@@ -61,7 +65,8 @@ export async function POST(req) {
                 customer_number: formatted,
                 customer_name: customerName || null,
                 status: 'pending',
-                scheduled_for: scheduledFor
+                scheduled_for: scheduledFor,
+                worker_id: worker ? worker.worker_id : null
             })
             .select()
             .single()
@@ -77,7 +82,7 @@ export async function POST(req) {
         // If delay is 0 — send immediately
         if (delay === 0) {
             try {
-                await sendWhatsApp(formatted, business.name, business.slug)
+                await sendWhatsApp(formatted, business.name, business.slug, request.id)
                 await supabaseAdmin
                     .from('requests')
                     .update({
@@ -118,12 +123,23 @@ export async function GET() {
             )
         }
 
-        const { data, error } = await supabaseAdmin
+        // Check if the owner is logged in (business_id cookie exists)
+        const cookieStore = await cookies()
+        const isOwner = !!cookieStore.get('business_id')?.value
+        const worker = isOwner ? null : await getWorkerFromCookies()
+
+        let query = supabaseAdmin
             .from('requests')
             .select('*')
             .eq('business_id', businessId)
+
+        // Only filter by worker if it's a worker session (not owner)
+        if (worker) {
+            query = query.eq('worker_id', worker.worker_id)
+        }
+
+        const { data, error } = await query
             .order('created_at', { ascending: false })
-            .limit(50)
 
         if (error) {
             return Response.json(

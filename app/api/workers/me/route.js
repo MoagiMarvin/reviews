@@ -11,7 +11,7 @@ export async function GET() {
 
     const { data: business } = await supabaseAdmin
         .from("businesses")
-        .select("id, name, slug")
+        .select("id, name, slug, allow_workers_to_see_ratings")
         .eq("id", worker.business_id)
         .maybeSingle();
 

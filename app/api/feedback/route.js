@@ -8,14 +8,16 @@ export async function POST(req) {
             rating,
             feedback,
             isPublic,
-            categoryRatings
+            categoryRatings,
+            requestId
         } = await req.json()
 
         console.log('Saving review:', {
             businessId,
             rating,
             categoryRatings,
-            isPublic
+            isPublic,
+            requestId
         })
 
         if (!businessId || !rating) {
@@ -23,6 +25,27 @@ export async function POST(req) {
                 { error: 'Business ID and rating are required' },
                 { status: 400 }
             )
+        }
+
+        let workerId = null
+        let validRequestId = null
+
+        if (requestId) {
+            const { data: requestRecord } = await supabaseAdmin
+                .from('requests')
+                .select('id, worker_id, business_id')
+                .eq('id', requestId)
+                .maybeSingle()
+
+            if (requestRecord && requestRecord.business_id === businessId) {
+                workerId = requestRecord.worker_id
+                validRequestId = requestRecord.id
+
+                await supabaseAdmin
+                    .from('requests')
+                    .update({ status: 'reviewed' })
+                    .eq('id', validRequestId)
+            }
         }
 
         const { data, error } = await supabaseAdmin
@@ -33,7 +56,9 @@ export async function POST(req) {
                 rating: parseInt(rating),
                 feedback: feedback || null,
                 is_public: isPublic || false,
-                category_ratings: categoryRatings || null
+                category_ratings: categoryRatings || null,
+                worker_id: workerId,
+                request_id: validRequestId
             })
             .select()
 

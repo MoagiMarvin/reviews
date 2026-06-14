@@ -293,6 +293,7 @@ export default function ReviewsPage() {
                                                         {new Date(r.created_at).toLocaleDateString('en-ZA', {
                                                             day: 'numeric', month: 'short', year: 'numeric'
                                                         })}
+                                                        {r.workers?.display_name && ` · Served by ${r.workers.display_name}`}
                                                     </div>
                                                 </div>
                                             </div>

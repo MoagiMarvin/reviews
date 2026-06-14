@@ -19,7 +19,29 @@ export async function GET() {
 
         if (error) throw error;
 
-        return NextResponse.json({ workers: workers || [] });
+        // Fetch requests and reviews in parallel to calculate stats
+        const [requestsRes, reviewsRes] = await Promise.all([
+            supabaseAdmin.from("requests").select("id, worker_id").eq("business_id", business.id),
+            supabaseAdmin.from("reviews").select("id, worker_id, rating").eq("business_id", business.id)
+        ]);
+
+        const requests = requestsRes.data || [];
+        const reviews = reviewsRes.data || [];
+
+        const workersWithStats = (workers || []).map(w => {
+            const wRequests = requests.filter(r => r.worker_id === w.id);
+            const wReviews = reviews.filter(r => r.worker_id === w.id);
+            const totalRating = wReviews.reduce((sum, r) => sum + r.rating, 0);
+            const avgRating = wReviews.length ? (totalRating / wReviews.length).toFixed(1) : null;
+            return {
+                ...w,
+                requests_count: wRequests.length,
+                reviews_count: wReviews.length,
+                avg_rating: avgRating
+            };
+        });
+
+        return NextResponse.json({ workers: workersWithStats });
     } catch (err) {
         console.error("List workers error:", err);
         return NextResponse.json({ error: "Failed to load workers" }, { status: 500 });

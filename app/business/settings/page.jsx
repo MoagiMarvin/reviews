@@ -37,6 +37,7 @@ export default function SettingsPage() {
     const [categories, setCategories] = useState(['Overall experience'])
     const [newCategory, setNewCategory] = useState('')
     const [copied, setCopied] = useState(false)
+    const [allowWorkersToSeeRatings, setAllowWorkersToSeeRatings] = useState(true)
 
     useEffect(() => { loadSettings() }, [])
 
@@ -67,6 +68,7 @@ export default function SettingsPage() {
                     ? s.rating_categories
                     : ['Overall experience'])
                 setGoogleLink(s.google_review_link || '')
+                setAllowWorkersToSeeRatings(s.allow_workers_to_see_ratings !== undefined ? s.allow_workers_to_see_ratings : true)
             }
         } catch (err) {
             console.log('Load settings error:', err)
@@ -89,7 +91,8 @@ export default function SettingsPage() {
                     name: name,
                     sendDelayMinutes: delay,
                     ratingCategories: categories,
-                    googleReviewLink: googleLink
+                    googleReviewLink: googleLink,
+                    allowWorkersToSeeRatings: allowWorkersToSeeRatings
                 })
             })
 
@@ -529,6 +532,25 @@ export default function SettingsPage() {
                                         {d.label}
                                     </button>
                                 ))}
+                            </div>
+                        </div>
+
+                        {/* Staff Visibility */}
+                        <div style={{ marginBottom: '1.75rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <input
+                                type="checkbox"
+                                id="allowWorkersToSeeRatings"
+                                checked={allowWorkersToSeeRatings}
+                                onChange={e => setAllowWorkersToSeeRatings(e.target.checked)}
+                                style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--primary)' }}
+                            />
+                            <div>
+                                <label htmlFor="allowWorkersToSeeRatings" style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-main)', cursor: 'pointer', margin: 0 }}>
+                                    Allow staff to view their own ratings & feedback
+                                </label>
+                                <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                    If enabled, staff members can log in and see their average rating and reviews.
+                                </p>
                             </div>
                         </div>
 

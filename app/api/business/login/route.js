@@ -23,6 +23,8 @@ export async function POST(req) {
         }
 
         const cookieStore = await cookies()
+        cookieStore.delete('worker_session')
+        
         cookieStore.set('business_token', data.session.access_token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',

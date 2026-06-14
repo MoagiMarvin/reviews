@@ -1,9 +1,11 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 
 export default function FeedbackPage() {
     const { slug } = useParams()
+    const searchParams = useSearchParams()
+    const requestId = searchParams.get('req')
     const [business, setBusiness] = useState(null)
     const [categories, setCategories] = useState(['Overall experience'])
     const [categoryRatings, setCategoryRatings] = useState({})
@@ -59,7 +61,8 @@ export default function FeedbackPage() {
                 rating: overallRating,
                 feedback: feedback || complement || null,
                 isPublic,
-                categoryRatings
+                categoryRatings,
+                requestId
             })
         })
         setLoading(false)

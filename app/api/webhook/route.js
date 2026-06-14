@@ -30,7 +30,8 @@ export async function GET() {
                 await sendWhatsApp(
                     request.customer_number,
                     request.businesses.name,
-                    request.businesses.slug
+                    request.businesses.slug,
+                    request.id
                 )
 
                 await supabaseAdmin

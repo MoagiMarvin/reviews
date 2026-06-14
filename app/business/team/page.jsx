@@ -184,6 +184,9 @@ export default function TeamPage() {
                                 <div>
                                     <strong>{w.display_name}</strong>
                                     <p style={{ margin: 0, fontSize: "13px", color: "#666" }}>@{w.username}</p>
+                                    <p style={{ margin: "4px 0 0 0", fontSize: "12px", color: "#888" }}>
+                                        Sent: <strong>{w.requests_count || 0}</strong> · Reviews: <strong>{w.reviews_count || 0}</strong> · Rating: <strong>{w.avg_rating ? `${w.avg_rating}★` : "—"}</strong>
+                                    </p>
                                 </div>
                                 <button
                                     onClick={() => {

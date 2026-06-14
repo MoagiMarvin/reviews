@@ -60,6 +60,8 @@ export async function POST(req) {
         );
 
         const cookieStore = await cookies();
+        cookieStore.delete("business_token");
+        cookieStore.delete("business_id");
         cookieStore.set("worker_session", token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",

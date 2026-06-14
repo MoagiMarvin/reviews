@@ -14,7 +14,7 @@ export async function GET() {
 
         const { data, error } = await supabaseAdmin
             .from('businesses')
-            .select('send_delay_minutes, rating_categories, name, slug, google_review_link')
+            .select('send_delay_minutes, rating_categories, name, slug, google_review_link, allow_workers_to_see_ratings')
             .eq('id', businessId)
             .single()
 
@@ -62,6 +62,9 @@ export async function POST(req) {
         }
         if (body.name) {
             updateFields.name = body.name
+        }
+        if (body.allowWorkersToSeeRatings !== undefined) {
+            updateFields.allow_workers_to_see_ratings = !!body.allowWorkersToSeeRatings
         }
 
         const { error } = await supabaseAdmin

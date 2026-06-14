@@ -14,6 +14,7 @@ const PERIODS = [
 export default function DashboardPage() {
     const router = useRouter()
     const [business, setBusiness] = useState(null)
+    const [worker, setWorker] = useState(null)
     const [requests, setRequests] = useState([])
     const [reviews, setReviews] = useState([])
     const [loading, setLoading] = useState(true)
@@ -25,18 +26,56 @@ export default function DashboardPage() {
 
     async function loadDashboard() {
         try {
-            const [bizRes, reqRes, revRes] = await Promise.all([
-                fetch('/api/business/me'),
-                fetch('/api/requests'),
-                fetch('/api/reviews')
-            ])
+            // 1. Check for owner session first
+            const bizRes = await fetch('/api/business/me')
             const bizData = await bizRes.json()
-            const reqData = await reqRes.json()
-            const revData = await revRes.json()
-            if (!bizData.business) { router.push('/business/login'); return }
-            setBusiness(bizData.business)
-            if (reqData.requests) setRequests(reqData.requests)
-            if (revData.reviews) setReviews(revData.reviews)
+
+            if (bizData.business) {
+                setBusiness(bizData.business)
+                const [reqRes, revRes] = await Promise.all([
+                    fetch('/api/requests'),
+                    fetch('/api/reviews')
+                ])
+                const reqData = await reqRes.json()
+                const revData = await revRes.json()
+                if (reqData.requests) setRequests(reqData.requests)
+                if (revData.reviews) setReviews(revData.reviews)
+                setLoading(false)
+                return
+            }
+
+            // 2. Fall back to worker session check
+            const workerRes = await fetch('/api/workers/me')
+            const workerData = await workerRes.json()
+
+            if (workerData.worker) {
+                // If worker is logged in, verify they are allowed to see reviews
+                const settingsRes = await fetch('/api/business/settings')
+                const settingsData = await settingsRes.json()
+
+                if (settingsData.settings && !settingsData.settings.allow_workers_to_see_ratings) {
+                    router.push('/business/send')
+                    return
+                }
+
+                setWorker(workerData.worker)
+                setBusiness(workerData.business)
+
+                const [reqRes, revRes] = await Promise.all([
+                    fetch('/api/requests'),
+                    fetch('/api/reviews')
+                ])
+                const reqData = await reqRes.json()
+                const revData = await revRes.json()
+
+                if (reqData.requests) setRequests(reqData.requests)
+                if (revData.reviews) setReviews(revData.reviews)
+                setLoading(false)
+                return
+            }
+
+            // If neither is logged in, redirect to login
+            router.push('/business/login')
         } catch (err) {
             router.push('/business/login')
         } finally {
@@ -242,7 +281,7 @@ export default function DashboardPage() {
                     .chart-bar { width: 60%; }
                 }
             `}</style>
-            <Sidebar business={business} />
+            <Sidebar business={business} worker={worker} />
             <div style={{ width: '100%', minWidth: 0 }} className="main-with-sidebar">
                 <div className="dash-page">
 
@@ -462,6 +501,11 @@ export default function DashboardPage() {
                                             {!r.feedback && r.is_public && (
                                                 <p style={{ fontSize: '0.72rem', color: 'var(--primary)', fontWeight: '600', margin: '0.25rem 0 0 0' }}>Sent to Google Business Profile ✓</p>
                                             )}
+                                            {r.workers?.display_name && (
+                                                <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0.25rem 0 0 0' }}>
+                                                    Served by: <strong>{r.workers.display_name}</strong>
+                                                </p>
+                                            )}
                                             <p style={{ fontSize: '0.68rem', color: 'var(--text-light)', marginTop: '0.35rem', margin: 0 }}>
                                                 {new Date(r.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })}
                                             </p>
@@ -589,21 +633,25 @@ export default function DashboardPage() {
                                     </svg>
                                 </a>
 
-                                <a href="/business/reviews" className="action-tile">
-                                    <span>View all reviews</span>
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                                        <polyline points="12 5 19 12 12 19"></polyline>
-                                    </svg>
-                                </a>
+                                {!worker && (
+                                    <>
+                                        <a href="/business/reviews" className="action-tile">
+                                            <span>View all reviews</span>
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                                <polyline points="12 5 19 12 12 19"></polyline>
+                                            </svg>
+                                        </a>
 
-                                <a href="/business/settings" className="action-tile">
-                                    <span>Manage Account</span>
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                                        <polyline points="12 5 19 12 12 19"></polyline>
-                                    </svg>
-                                </a>
+                                        <a href="/business/settings" className="action-tile">
+                                            <span>Manage Account</span>
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                                <polyline points="12 5 19 12 12 19"></polyline>
+                                            </svg>
+                                        </a>
+                                    </>
+                                )}
                             </div>
 
                         </div>
