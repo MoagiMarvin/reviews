@@ -14,7 +14,7 @@ export async function GET() {
 
         const { data, error } = await supabaseAdmin
             .from('businesses')
-            .select('send_delay_minutes, rating_categories, name, slug, google_review_link, allow_workers_to_see_ratings')
+            .select('send_delay_minutes, rating_categories, name, slug, google_review_link, allow_workers_to_see_ratings, worker_visible_categories')
             .eq('id', businessId)
             .single()
 
@@ -24,6 +24,11 @@ export async function GET() {
                 { error: error.message },
                 { status: 400 }
             )
+        }
+
+        // Default to empty array if not set, requiring explicit opt-in
+        if (data && data.worker_visible_categories === null) {
+            data.worker_visible_categories = []
         }
 
         return Response.json({ settings: data })
@@ -65,6 +70,9 @@ export async function POST(req) {
         }
         if (body.allowWorkersToSeeRatings !== undefined) {
             updateFields.allow_workers_to_see_ratings = !!body.allowWorkersToSeeRatings
+        }
+        if (body.workerVisibleCategories !== undefined) {
+            updateFields.worker_visible_categories = body.workerVisibleCategories || []
         }
 
         const { error } = await supabaseAdmin

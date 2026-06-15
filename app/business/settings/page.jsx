@@ -38,6 +38,7 @@ export default function SettingsPage() {
     const [newCategory, setNewCategory] = useState('')
     const [copied, setCopied] = useState(false)
     const [allowWorkersToSeeRatings, setAllowWorkersToSeeRatings] = useState(true)
+    const [workerVisibleCategories, setWorkerVisibleCategories] = useState([])
 
     useEffect(() => { loadSettings() }, [])
 
@@ -64,9 +65,13 @@ export default function SettingsPage() {
                 setDelay(s.send_delay_minutes !== null && s.send_delay_minutes !== undefined
                     ? s.send_delay_minutes
                     : 60)
-                setCategories(s.rating_categories?.length
+                const cats = s.rating_categories?.length
                     ? s.rating_categories
-                    : ['Overall experience'])
+                    : ['Overall experience']
+                setCategories(cats)
+                setWorkerVisibleCategories(s.worker_visible_categories !== null && s.worker_visible_categories !== undefined
+                    ? s.worker_visible_categories
+                    : cats)
                 setGoogleLink(s.google_review_link || '')
                 setAllowWorkersToSeeRatings(s.allow_workers_to_see_ratings !== undefined ? s.allow_workers_to_see_ratings : true)
             }
@@ -92,7 +97,8 @@ export default function SettingsPage() {
                     sendDelayMinutes: delay,
                     ratingCategories: categories,
                     googleReviewLink: googleLink,
-                    allowWorkersToSeeRatings: allowWorkersToSeeRatings
+                    allowWorkersToSeeRatings: allowWorkersToSeeRatings,
+                    workerVisibleCategories: workerVisibleCategories
                 })
             })
 
@@ -116,19 +122,33 @@ export default function SettingsPage() {
     }
 
     function applyPreset(preset) {
-        setCategories(PRESETS[preset])
+        const cats = PRESETS[preset]
+        setCategories(cats)
+        setWorkerVisibleCategories(cats)
     }
 
     function addCategory() {
         if (!newCategory.trim()) return
-        if (categories.includes(newCategory.trim())) return
-        setCategories([...categories, newCategory.trim()])
+        const trimmed = newCategory.trim()
+        if (categories.includes(trimmed)) return
+        setCategories([...categories, trimmed])
+        setWorkerVisibleCategories([...workerVisibleCategories, trimmed])
         setNewCategory('')
     }
 
     function removeCategory(index) {
         if (categories.length === 1) return
+        const removedCat = categories[index]
         setCategories(categories.filter((_, i) => i !== index))
+        setWorkerVisibleCategories(workerVisibleCategories.filter(c => c !== removedCat))
+    }
+
+    function toggleWorkerVisibility(category) {
+        if (workerVisibleCategories.includes(category)) {
+            setWorkerVisibleCategories(workerVisibleCategories.filter(c => c !== category))
+        } else {
+            setWorkerVisibleCategories([...workerVisibleCategories, category])
+        }
     }
 
     function handleCopyLink() {
@@ -576,13 +596,24 @@ export default function SettingsPage() {
                                         <span style={{ fontSize: '0.85rem', fontWeight: '500', color: 'var(--text-main)' }}>
                                             {cat}
                                         </span>
-                                        <button
-                                            onClick={() => removeCategory(i)}
-                                            className="remove-btn"
-                                            disabled={categories.length === 1}
-                                        >
-                                            ✕
-                                        </button>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer', fontSize: '0.78rem', fontWeight: '600', color: 'var(--text-muted)' }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={workerVisibleCategories.includes(cat)}
+                                                    onChange={() => toggleWorkerVisibility(cat)}
+                                                    style={{ cursor: 'pointer', width: '15px', height: '15px', accentColor: 'var(--primary)' }}
+                                                />
+                                                Show to staff
+                                            </label>
+                                            <button
+                                                onClick={() => removeCategory(i)}
+                                                className="remove-btn"
+                                                disabled={categories.length === 1}
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
