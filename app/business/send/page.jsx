@@ -103,9 +103,12 @@ export default function SendPage() {
     const statusColors = { pending: '#d97706', sent: '#3b82f6', reviewed: '#16a34a' }
 
     if (loading) return (
-        <div style={centerStyle}>
-            <p style={{ color: '#64748b', fontSize: '0.875rem' }}>Loading page data...</p>
-        </div>
+        <BusinessLayout>
+            <Sidebar business={business} />
+            <div style={{ ...centerStyle, paddingLeft: '220px' }}>
+                <p style={{ color: '#64748b', fontSize: '0.875rem' }}>Loading page data...</p>
+            </div>
+        </BusinessLayout>
     )
 
     return (

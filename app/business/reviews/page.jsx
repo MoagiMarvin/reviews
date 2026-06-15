@@ -91,9 +91,12 @@ export default function ReviewsPage() {
     }))
 
     if (loading) return (
-        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
-            <p style={{ color: '#64748b', fontSize: '0.875rem' }}>Loading reviews...</p>
-        </div>
+        <BusinessLayout>
+            <Sidebar business={business} />
+            <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', paddingLeft: '220px' }}>
+                <p style={{ color: '#64748b', fontSize: '0.875rem' }}>Loading reviews...</p>
+            </div>
+        </BusinessLayout>
     )
 
     return (

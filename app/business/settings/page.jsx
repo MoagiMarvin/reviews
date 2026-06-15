@@ -161,9 +161,12 @@ export default function SettingsPage() {
     }
 
     if (loading) return (
-        <div style={centerStyle}>
-            <p style={{ color: '#64748b', fontSize: '0.875rem' }}>Loading settings...</p>
-        </div>
+        <BusinessLayout>
+            <Sidebar business={business} />
+            <div style={{ ...centerStyle, paddingLeft: '220px' }}>
+                <p style={{ color: '#64748b', fontSize: '0.875rem' }}>Loading settings...</p>
+            </div>
+        </BusinessLayout>
     )
 
     return (
