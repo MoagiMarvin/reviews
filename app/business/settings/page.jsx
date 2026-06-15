@@ -40,8 +40,6 @@ export default function SettingsPage() {
     const [allowWorkersToSeeRatings, setAllowWorkersToSeeRatings] = useState(true)
     const [workerVisibleCategories, setWorkerVisibleCategories] = useState([])
 
-    useEffect(() => { loadSettings() }, [])
-
     async function loadSettings() {
         try {
             const [bizRes, settingsRes] = await Promise.all([
@@ -69,9 +67,10 @@ export default function SettingsPage() {
                     ? s.rating_categories
                     : ['Overall experience']
                 setCategories(cats)
-                setWorkerVisibleCategories(s.worker_visible_categories !== null && s.worker_visible_categories !== undefined
-                    ? s.worker_visible_categories
-                    : cats)
+                const savedVisible = Array.isArray(s.worker_visible_categories)
+                    ? s.worker_visible_categories.filter(cat => cats.includes(cat))
+                    : []
+                setWorkerVisibleCategories(savedVisible)
                 setGoogleLink(s.google_review_link || '')
                 setAllowWorkersToSeeRatings(s.allow_workers_to_see_ratings !== undefined ? s.allow_workers_to_see_ratings : true)
             }
@@ -82,6 +81,9 @@ export default function SettingsPage() {
             setLoading(false)
         }
     }
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    useEffect(() => { loadSettings() }, [])
 
     async function handleSave() {
         setSaving(true)
@@ -124,7 +126,7 @@ export default function SettingsPage() {
     function applyPreset(preset) {
         const cats = PRESETS[preset]
         setCategories(cats)
-        setWorkerVisibleCategories(cats)
+        setWorkerVisibleCategories([])
     }
 
     function addCategory() {
@@ -132,7 +134,6 @@ export default function SettingsPage() {
         const trimmed = newCategory.trim()
         if (categories.includes(trimmed)) return
         setCategories([...categories, trimmed])
-        setWorkerVisibleCategories([...workerVisibleCategories, trimmed])
         setNewCategory('')
     }
 
