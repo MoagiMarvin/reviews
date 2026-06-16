@@ -49,17 +49,27 @@ export default function WorkerSidebar({ worker, business }) {
 
     const NavLinks = () => (
         <>
-            {business && (
-                <div style={bizStyle}>
-                    <div style={bizAvatarStyle}>
-                        {(worker?.display_name || 'W').slice(0, 2).toUpperCase()}
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                        <div style={bizNameStyle}>{worker?.display_name || 'Staff'}</div>
-                        <div style={bizSlugStyle}>{business.name}</div>
-                    </div>
-                </div>
-            )}
+            <div style={bizStyle}>
+                {business ? (
+                    <>
+                        <div style={bizAvatarStyle}>
+                            {(worker?.display_name || 'W').slice(0, 2).toUpperCase()}
+                        </div>
+                        <div style={{ minWidth: 0 }}>
+                            <div style={bizNameStyle}>{worker?.display_name || 'Staff'}</div>
+                            <div style={bizSlugStyle}>{business.name}</div>
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <div style={{ ...bizAvatarStyle, background: '#334155', animation: 'pulse 2s infinite' }} />
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                            <div style={{ ...bizNameStyle, height: '12px', width: '80%', background: '#334155', borderRadius: '4px', marginBottom: '0.5rem', animation: 'pulse 2s infinite' }} />
+                            <div style={{ ...bizSlugStyle, height: '10px', width: '60%', background: '#334155', borderRadius: '4px', animation: 'pulse 2s infinite' }} />
+                        </div>
+                    </>
+                )}
+            </div>
             <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                 {links.map(link => {
                     const active = pathname === link.href
@@ -108,6 +118,11 @@ export default function WorkerSidebar({ worker, business }) {
                 @media (max-width: 767px) {
                     .wsidebar-desktop { display: none; }
                     .wsidebar-mobile-bar { display: flex; }
+                }
+
+                @keyframes pulse {
+                    0%, 100% { opacity: 0.6; }
+                    50% { opacity: 0.3; }
                 }
 
                 .wnav-item {

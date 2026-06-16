@@ -1,14 +1,42 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import WorkerSidebar from "@/components/worker/WorkerSidebar";
+import WorkerLayout from "@/components/worker/WorkerLayout";
 
 export default function WorkerChangePasswordPage() {
     const [password, setPassword] = useState("");
     const [confirm, setConfirm] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const [pageLoading, setPageLoading] = useState(true);
+    const [worker, setWorker] = useState(null);
+    const [business, setBusiness] = useState(null);
     const router = useRouter();
+
+    useEffect(() => {
+        async function loadPage() {
+            try {
+                const meRes = await fetch('/api/workers/me');
+                const meData = await meRes.json();
+
+                if (!meData.worker) {
+                    router.push('/business/login');
+                    return;
+                }
+
+                setWorker(meData.worker);
+                setBusiness(meData.business);
+            } catch {
+                router.push('/business/login');
+            } finally {
+                setPageLoading(false);
+            }
+        }
+
+        loadPage();
+    }, [router]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -45,41 +73,53 @@ export default function WorkerChangePasswordPage() {
         }
     };
 
-    return (
-        <div style={styles.wrapper}>
-            <div style={styles.card}>
-                <h1 style={styles.title}>Set Your Password</h1>
-                <p style={styles.subtitle}>
-                    For security, please set your own password before continuing.
-                </p>
-
-                <form onSubmit={handleSubmit}>
-                    <label style={styles.label}>New Password</label>
-                    <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        style={styles.input}
-                        placeholder="Enter new password"
-                    />
-
-                    <label style={styles.label}>Confirm Password</label>
-                    <input
-                        type="password"
-                        value={confirm}
-                        onChange={(e) => setConfirm(e.target.value)}
-                        style={styles.input}
-                        placeholder="Confirm new password"
-                    />
-
-                    {error && <p style={styles.error}>{error}</p>}
-
-                    <button type="submit" disabled={loading} style={styles.button}>
-                        {loading ? "Saving..." : "Save & Continue"}
-                    </button>
-                </form>
+    if (pageLoading) return (
+        <WorkerLayout>
+            <WorkerSidebar worker={worker} business={business} />
+            <div style={styles.pageLoading}>
+                <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Loading change password page...</p>
             </div>
-        </div>
+        </WorkerLayout>
+    );
+
+    return (
+        <WorkerLayout>
+            <WorkerSidebar worker={worker} business={business} />
+            <div style={styles.wrapper}>
+                <div style={styles.card}>
+                    <h1 style={styles.title}>Set Your Password</h1>
+                    <p style={styles.subtitle}>
+                        For security, please set your own password before continuing.
+                    </p>
+
+                    <form onSubmit={handleSubmit}>
+                        <label style={styles.label}>New Password</label>
+                        <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            style={styles.input}
+                            placeholder="Enter new password"
+                        />
+
+                        <label style={styles.label}>Confirm Password</label>
+                        <input
+                            type="password"
+                            value={confirm}
+                            onChange={(e) => setConfirm(e.target.value)}
+                            style={styles.input}
+                            placeholder="Confirm new password"
+                        />
+
+                        {error && <p style={styles.error}>{error}</p>}
+
+                        <button type="submit" disabled={loading} style={styles.button}>
+                            {loading ? "Saving..." : "Save & Continue"}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </WorkerLayout>
     );
 }
 

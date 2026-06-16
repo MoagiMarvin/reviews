@@ -92,9 +92,12 @@ export default function WorkerSendPage() {
     const statusColors = { pending: '#d97706', sent: '#3b82f6', reviewed: '#16a34a' }
 
     if (loading) return (
-        <div style={centerStyle}>
-            <p style={{ color: '#64748b', fontSize: '0.875rem' }}>Loading page data...</p>
-        </div>
+        <WorkerLayout>
+            <WorkerSidebar worker={worker} business={business} />
+            <div style={centerStyle}>
+                <p style={{ color: '#64748b', fontSize: '0.875rem' }}>Loading page data...</p>
+            </div>
+        </WorkerLayout>
     )
 
     return (

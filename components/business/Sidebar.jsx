@@ -69,19 +69,29 @@ export default function Sidebar({ business }) {
 
     const NavLinks = () => (
         <>
-            {business && (
-                <div style={bizStyle}>
-                    <div style={bizAvatarStyle}>
-                        {business.name.slice(0, 2).toUpperCase()}
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                        <div style={bizNameStyle}>{business.name}</div>
-                        <div style={bizSlugStyle}>
-                            {`/${business.slug}`}
+            <div style={bizStyle}>
+                {business ? (
+                    <>
+                        <div style={bizAvatarStyle}>
+                            {business.name.slice(0, 2).toUpperCase()}
                         </div>
-                    </div>
-                </div>
-            )}
+                        <div style={{ minWidth: 0 }}>
+                            <div style={bizNameStyle}>{business.name}</div>
+                            <div style={bizSlugStyle}>
+                                {`/${business.slug}`}
+                            </div>
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <div style={{ ...bizAvatarStyle, background: '#334155', animation: 'pulse 2s infinite' }} />
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                            <div style={{ ...bizNameStyle, height: '12px', background: '#334155', borderRadius: '4px', marginBottom: '0.5rem', animation: 'pulse 2s infinite' }} />
+                            <div style={{ ...bizSlugStyle, height: '10px', background: '#334155', borderRadius: '4px', animation: 'pulse 2s infinite' }} />
+                        </div>
+                    </>
+                )}
+            </div>
             <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                 {links.map(link => {
                     const active = pathname === link.href
@@ -130,6 +140,11 @@ export default function Sidebar({ business }) {
                 @media (max-width: 767px) {
                     .sidebar-desktop { display: none; }
                     .sidebar-mobile-bar { display: flex; }
+                }
+
+                @keyframes pulse {
+                    0%, 100% { opacity: 0.6; }
+                    50% { opacity: 0.3; }
                 }
 
                 .nav-item {

@@ -80,11 +80,15 @@ export default function WorkerDashboardPage() {
     }
 
     const statusColors = { pending: '#d97706', sent: '#3b82f6', reviewed: '#16a34a' }
+    const centerStyle = { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', width: '100%', paddingLeft: '220px' }
 
     if (loading) return (
-        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
-            <p style={{ color: '#64748b', fontSize: '0.875rem' }}>Loading your dashboard...</p>
-        </div>
+        <WorkerLayout>
+            <WorkerSidebar worker={worker} business={business} />
+            <div style={centerStyle}>
+                <p style={{ color: '#64748b', fontSize: '0.875rem' }}>Loading your dashboard...</p>
+            </div>
+        </WorkerLayout>
     )
 
     return (
