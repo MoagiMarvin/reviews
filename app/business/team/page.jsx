@@ -1,29 +1,35 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Sidebar from "@/components/business/Sidebar";
 import BusinessLayout from "@/components/business/BusinessLayout";
 
 export default function TeamPage() {
+    const [business, setBusiness] = useState(null);
     const [workers, setWorkers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
 
-    // form state
-    const [displayName, setDisplayName] = useState("");
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
-    const [error, setError] = useState("");
-    const [creating, setCreating] = useState(false);
-    const [successInfo, setSuccessInfo] = useState(null);
+    const fetchData = async () => {
+        try {
+            const [bizRes, workersRes] = await Promise.all([
+                fetch("/api/business/me"),
+                fetch("/api/workers")
+            ]);
+            const bizData = await bizRes.json();
+            const workersData = await workersRes.json();
+            if (bizData.business) setBusiness(bizData.business);
+            if (workersData.workers) setWorkers(workersData.workers);
+        } catch (err) {
+            console.error("Failed to load data", err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    // reset password modal state
-    const [resetWorkerId, setResetWorkerId] = useState(null);
-    const [resetTempPassword, setResetTempPassword] = useState("");
-    const [resetting, setResetting] = useState(false);
-    const [resetSuccess, setResetSuccess] = useState(null);
-
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     useEffect(() => {
-        fetchWorkers();
+        fetchData();
     }, []);
 
     const fetchWorkers = async () => {
@@ -33,10 +39,20 @@ export default function TeamPage() {
             setWorkers(data.workers || []);
         } catch (err) {
             console.error("Failed to load workers", err);
-        } finally {
-            setLoading(false);
         }
     };
+
+    const [displayName, setDisplayName] = useState("");
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
+    const [creating, setCreating] = useState(false);
+    const [successInfo, setSuccessInfo] = useState(null);
+
+    const [resetWorkerId, setResetWorkerId] = useState(null);
+    const [resetTempPassword, setResetTempPassword] = useState("");
+    const [resetting, setResetting] = useState(false);
+    const [resetSuccess, setResetSuccess] = useState(null);
 
     const handleCreate = async (e) => {
         e.preventDefault();
@@ -101,7 +117,13 @@ export default function TeamPage() {
 
     return (
         <BusinessLayout>
-            <div style={{ padding: "24px", maxWidth: "700px", margin: "0 auto" }}>
+            <Sidebar business={business} />
+            {loading ? (
+                <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', paddingLeft: '220px' }}>
+                    <p style={{ color: '#64748b', fontSize: '0.875rem' }}>Loading team...</p>
+                </div>
+            ) : (
+                <div style={{ padding: "24px", maxWidth: "700px", margin: "0 auto" }}>
                 <h1 style={{ fontSize: "24px", fontWeight: 700, marginBottom: "8px" }}>Team</h1>
                 <p style={{ color: "#666", marginBottom: "24px", fontSize: "14px" }}>
                     Add staff accounts that can only send review requests — they won't see your
@@ -243,7 +265,8 @@ export default function TeamPage() {
                         </div>
                     </div>
                 )}
-            </div>
+                </div>
+            )}
         </BusinessLayout>
     );
 }
