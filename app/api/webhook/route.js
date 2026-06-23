@@ -1,8 +1,19 @@
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendWhatsApp } from '@/lib/twilio'
 
-export async function GET() {
+export async function GET(req) {
     try {
+        const { searchParams } = new URL(req.url)
+        const secret = searchParams.get('secret')
+        const expectedSecret = process.env.WEBHOOK_SECRET
+
+        if (expectedSecret && secret !== expectedSecret) {
+            return Response.json(
+                { error: 'Unauthorized' },
+                { status: 401 }
+            )
+        }
+
         const now = new Date().toISOString()
 
         // Find all pending requests where scheduled time has passed
