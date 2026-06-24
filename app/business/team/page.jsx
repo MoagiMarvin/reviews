@@ -54,6 +54,11 @@ export default function TeamPage() {
     const [resetting, setResetting] = useState(false);
     const [resetSuccess, setResetSuccess] = useState(null);
 
+    const [deleteWorkerId, setDeleteWorkerId] = useState(null);
+    const [deleteWorkerName, setDeleteWorkerName] = useState("");
+    const [deleting, setDeleting] = useState(false);
+    const [deleteError, setDeleteError] = useState("");
+
     const handleCreate = async (e) => {
         e.preventDefault();
         setError("");
@@ -112,6 +117,29 @@ export default function TeamPage() {
             alert("Something went wrong. Please try again.");
         } finally {
             setResetting(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!deleteWorkerId) return;
+        setDeleting(true);
+        setDeleteError("");
+        try {
+            const res = await fetch(`/api/workers?worker_id=${deleteWorkerId}`, {
+                method: "DELETE",
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                setDeleteError(data.error || "Failed to delete worker");
+            } else {
+                setDeleteWorkerId(null);
+                setDeleteWorkerName("");
+                fetchWorkers();
+            }
+        } catch {
+            setDeleteError("Something went wrong. Please try again.");
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -210,16 +238,28 @@ export default function TeamPage() {
                                         Sent: <strong>{w.requests_count || 0}</strong> · Reviews: <strong>{w.reviews_count || 0}</strong> · Rating: <strong>{w.avg_rating ? `${w.avg_rating}★` : "—"}</strong>
                                     </p>
                                 </div>
-                                <button
-                                    onClick={() => {
-                                        setResetWorkerId(w.id);
-                                        setResetTempPassword("");
-                                        setResetSuccess(null);
-                                    }}
-                                    style={secondaryButton}
-                                >
-                                    Reset Password
-                                </button>
+                                <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
+                                    <button
+                                        onClick={() => {
+                                            setResetWorkerId(w.id);
+                                            setResetTempPassword("");
+                                            setResetSuccess(null);
+                                        }}
+                                        style={secondaryButton}
+                                    >
+                                        Reset Password
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setDeleteWorkerId(w.id);
+                                            setDeleteWorkerName(w.display_name);
+                                            setDeleteError("");
+                                        }}
+                                        style={deleteButton}
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -262,6 +302,37 @@ export default function TeamPage() {
                                     </div>
                                 </>
                             )}
+                        </div>
+                    </div>
+                )}
+
+                {/* Delete confirmation modal */}
+                {deleteWorkerId && (
+                    <div style={modalOverlay}>
+                        <div style={{ ...card, maxWidth: "360px" }}>
+                            <h3 style={{ marginBottom: "8px", color: "#111" }}>Delete Worker?</h3>
+                            <p style={{ fontSize: "14px", color: "#444", marginBottom: "16px" }}>
+                                You are about to permanently delete <strong>{deleteWorkerName}</strong>.
+                                This cannot be undone and they will lose access immediately.
+                            </p>
+                            {deleteError && (
+                                <p style={{ color: "#d92d20", fontSize: "13px", marginBottom: "12px" }}>{deleteError}</p>
+                            )}
+                            <div style={{ display: "flex", gap: "8px" }}>
+                                <button
+                                    onClick={handleDelete}
+                                    disabled={deleting}
+                                    style={deleteButton}
+                                >
+                                    {deleting ? "Deleting..." : "Yes, Delete"}
+                                </button>
+                                <button
+                                    onClick={() => { setDeleteWorkerId(null); setDeleteWorkerName(""); setDeleteError(""); }}
+                                    style={secondaryButton}
+                                >
+                                    Cancel
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -337,6 +408,18 @@ const workerRow = {
     border: "1px solid #eee",
     borderRadius: "8px",
     backgroundColor: "#fff",
+};
+
+const deleteButton = {
+    padding: "10px 16px",
+    borderRadius: "8px",
+    border: "none",
+    backgroundColor: "#fef2f2",
+    color: "#dc2626",
+    fontWeight: 600,
+    fontSize: "14px",
+    cursor: "pointer",
+    border: "1px solid #fecaca",
 };
 
 const modalOverlay = {

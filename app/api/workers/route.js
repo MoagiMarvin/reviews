@@ -91,3 +91,44 @@ export async function POST(req) {
         return NextResponse.json({ error: "Failed to reset password" }, { status: 500 });
     }
 }
+
+
+// DELETE /api/workers?worker_id=xxx — permanently delete a worker account
+export async function DELETE(req) {
+    try {
+        const business = await getBusinessFromCookies();
+        if (!business) {
+            return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+        }
+
+        const { searchParams } = new URL(req.url);
+        const worker_id = searchParams.get("worker_id");
+
+        if (!worker_id) {
+            return NextResponse.json({ error: "worker_id is required" }, { status: 400 });
+        }
+
+        // Verify this worker belongs to this business before deleting
+        const { data: worker } = await supabaseAdmin
+            .from("workers")
+            .select("id, business_id, display_name")
+            .eq("id", worker_id)
+            .maybeSingle();
+
+        if (!worker || worker.business_id !== business.id) {
+            return NextResponse.json({ error: "Worker not found" }, { status: 404 });
+        }
+
+        const { error } = await supabaseAdmin
+            .from("workers")
+            .delete()
+            .eq("id", worker_id);
+
+        if (error) throw error;
+
+        return NextResponse.json({ success: true });
+    } catch (err) {
+        console.error("Delete worker error:", err);
+        return NextResponse.json({ error: "Failed to delete worker" }, { status: 500 });
+    }
+}
