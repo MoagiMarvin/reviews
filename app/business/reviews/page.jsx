@@ -8,6 +8,7 @@ export default function ReviewsPage() {
     const [reviews, setReviews] = useState([])
     const [loading, setLoading] = useState(true)
     const [filter, setFilter] = useState('all')
+    const [timeRange, setTimeRange] = useState('all')
     const [selected, setSelected] = useState(null)
 
     useEffect(() => { loadData() }, [])
@@ -29,9 +30,28 @@ export default function ReviewsPage() {
         }
     }
 
+    const getTimeRangeStart = () => {
+        const now = new Date()
+        if (timeRange === '7d') {
+            const d = new Date(now); d.setDate(d.getDate() - 7); return d
+        }
+        if (timeRange === '30d') {
+            const d = new Date(now); d.setDate(d.getDate() - 30); return d
+        }
+        if (timeRange === 'month') {
+            return new Date(now.getFullYear(), now.getMonth(), 1)
+        }
+        return null
+    }
+
+    const timeStart = getTimeRangeStart()
+    const timeFiltered = timeStart
+        ? reviews.filter(r => new Date(r.created_at) >= timeStart)
+        : reviews
+
     const getCategoryAnalytics = () => {
         const catMap = {}
-        reviews.forEach(r => {
+        timeFiltered.forEach(r => {
             if (r.category_ratings && typeof r.category_ratings === 'object') {
                 Object.entries(r.category_ratings).forEach(([cat, val]) => {
                     if (!catMap[cat]) catMap[cat] = { total: 0, count: 0 }
@@ -70,7 +90,7 @@ export default function ReviewsPage() {
         return 'Urgent'
     }
 
-    const filtered = reviews.filter(r => {
+    const filtered = timeFiltered.filter(r => {
         if (filter === 'positive') return r.rating >= 4
         if (filter === 'negative') return r.rating < 4
         if (filter === 'google') return r.is_public
@@ -78,15 +98,23 @@ export default function ReviewsPage() {
         return true
     })
 
-    const avgRating = reviews.length
-        ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
+    const filterCounts = {
+        all: timeFiltered.length,
+        positive: timeFiltered.filter(r => r.rating >= 4).length,
+        negative: timeFiltered.filter(r => r.rating < 4).length,
+        google: timeFiltered.filter(r => r.is_public).length,
+        private: timeFiltered.filter(r => !r.is_public).length,
+    }
+
+    const avgRating = timeFiltered.length
+        ? (timeFiltered.reduce((s, r) => s + r.rating, 0) / timeFiltered.length).toFixed(1)
         : null
 
     const ratingCounts = [5, 4, 3, 2, 1].map(star => ({
         star,
-        count: reviews.filter(r => r.rating === star).length,
-        pct: reviews.length
-            ? Math.round((reviews.filter(r => r.rating === star).length / reviews.length) * 100)
+        count: timeFiltered.filter(r => r.rating === star).length,
+        pct: timeFiltered.length
+            ? Math.round((timeFiltered.filter(r => r.rating === star).length / timeFiltered.length) * 100)
             : 0
     }))
 
@@ -137,21 +165,50 @@ export default function ReviewsPage() {
                 <div className="rev-page">
 
                     {/* Page header */}
-                    <div style={{ marginBottom: '2rem' }}>
-                        <h1 className="rev-title">Reviews</h1>
-                        <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: 0 }}>
-                            Manage and respond to customer reviews and ratings
-                        </p>
+                    <div style={{ marginBottom: '2rem', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+                        <div>
+                            <h1 className="rev-title">Reviews</h1>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: 0 }}>
+                                Manage and respond to customer reviews and ratings
+                            </p>
+                        </div>
+                        {/* Time range picker */}
+                        <div style={{ display: 'flex', gap: '0.3rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '100px', padding: '0.25rem', boxShadow: 'var(--shadow-sm)' }}>
+                            {[
+                                { key: 'all', label: 'All time' },
+                                { key: 'month', label: 'This month' },
+                                { key: '30d', label: '30 days' },
+                                { key: '7d', label: '7 days' },
+                            ].map(t => (
+                                <button
+                                    key={t.key}
+                                    onClick={() => { setTimeRange(t.key); setFilter('all') }}
+                                    style={{
+                                        padding: '0.3rem 0.85rem',
+                                        fontSize: '0.78rem',
+                                        fontWeight: '600',
+                                        borderRadius: '100px',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.15s ease',
+                                        background: timeRange === t.key ? 'var(--text-main)' : 'transparent',
+                                        color: timeRange === t.key ? '#ffffff' : 'var(--text-muted)',
+                                    }}
+                                >
+                                    {t.label}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     {/* Stats row */}
                     <div className="rev-stats">
                         {[
-                            { label: 'Total', value: reviews.length, color: 'var(--text-main)' },
+                            { label: 'Total', value: timeFiltered.length, color: 'var(--text-main)' },
                             { label: 'Avg Rating', value: avgRating ? `${avgRating}★` : '—', color: '#d97706' },
-                            { label: 'Positive', value: reviews.filter(r => r.rating >= 4).length, color: 'var(--primary)' },
-                            { label: 'Negative', value: reviews.filter(r => r.rating < 4).length, color: '#dc2626' },
-                            { label: 'On Google', value: reviews.filter(r => r.is_public).length, color: '#2563eb' },
+                            { label: 'Positive', value: timeFiltered.filter(r => r.rating >= 4).length, color: 'var(--primary)' },
+                            { label: 'Negative', value: timeFiltered.filter(r => r.rating < 4).length, color: '#dc2626' },
+                            { label: 'On Google', value: timeFiltered.filter(r => r.is_public).length, color: '#2563eb' },
                         ].map(s => (
                             <div key={s.label} className="rev-stat-card">
                                 <div style={{ fontSize: '0.68rem', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
@@ -259,6 +316,12 @@ export default function ReviewsPage() {
                                         }}
                                     >
                                         {tab.label}
+                                        <span style={{
+                                            marginLeft: '0.35rem',
+                                            fontSize: '0.7rem',
+                                            fontWeight: '700',
+                                            opacity: filter === tab.key ? 0.75 : 0.55
+                                        }}>({filterCounts[tab.key]})</span>
                                     </button>
                                 ))}
                             </div>
