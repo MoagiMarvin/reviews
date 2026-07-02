@@ -321,7 +321,7 @@ export default function SendPage() {
                                                 {business?.name ? business.name.slice(0, 1).toUpperCase() : 'R'}
                                             </div>
                                             <div style={{ flex: 1 }}>
-                                                <div style={{ fontSize: '0.78rem', fontWeight: '600', lineHeight: 1.1 }}>{business?.name || 'Repuvault Business'}</div>
+                                                <div style={{ fontSize: '0.78rem', fontWeight: '600', lineHeight: 1.1 }}>{business?.name || 'Credly Business'}</div>
                                                 <div style={{ fontSize: '0.58rem', opacity: 0.8 }}>online</div>
                                             </div>
                                             <div style={{ display: 'flex', gap: '0.5rem', opacity: 0.85 }}>

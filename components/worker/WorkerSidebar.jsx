@@ -153,7 +153,7 @@ export default function WorkerSidebar({ worker, business }) {
                 <div style={{ padding: '1.5rem 1rem', display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
                     <div style={{ padding: '0 0.75rem', marginBottom: '2rem' }}>
                         <span style={{ color: '#ffffff', fontWeight: '800', fontSize: '1.25rem', letterSpacing: '-0.03em' }}>
-                            Repu<span style={{ color: '#3b82f6' }}>vault</span>
+                            Cred<span style={{ color: '#3b82f6' }}>ly</span>
                         </span>
                         <div style={{ fontSize: '0.65rem', color: '#64748b', marginTop: '2px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Staff Portal</div>
                     </div>
@@ -176,7 +176,7 @@ export default function WorkerSidebar({ worker, business }) {
                         )}
                     </button>
                     <span style={{ fontWeight: '800', fontSize: '1.15rem', color: '#0f172a', letterSpacing: '-0.03em' }}>
-                        Repu<span style={{ color: '#3b82f6' }}>vault</span>
+                        Cred<span style={{ color: '#3b82f6' }}>ly</span>
                     </span>
                 </div>
                 {worker && (
@@ -199,7 +199,7 @@ export default function WorkerSidebar({ worker, business }) {
                                     </svg>
                                 </button>
                                 <span style={{ fontWeight: '800', fontSize: '1.25rem', color: '#ffffff', letterSpacing: '-0.03em' }}>
-                                    Repu<span style={{ color: '#3b82f6' }}>vault</span>
+                                    Cred<span style={{ color: '#3b82f6' }}>ly</span>
                                 </span>
                             </div>
                             <NavLinks />

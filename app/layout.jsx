@@ -1,5 +1,5 @@
 export const metadata = {
-    title: 'Repuvault',
+    title: 'Credly',
     description: 'Protect your reputation online',
 }
 
